@@ -1,0 +1,23 @@
+body {
+    font-family: sans-serif;
+    background-color: #f8f8f8;
+    margin: 0;
+    padding: 20px;
+  }
+  
+  img {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+  
+  img:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3); 
+  }
+  
+.flex {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;  
+    overflow-x: auto;
+  }
+  
