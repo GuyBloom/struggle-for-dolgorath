@@ -2,6 +2,12 @@ from .deck import Deck
 from .player import Player
 #turn order: 1 ->2 -> 4 -> 3 -> 1
 
+plusOneCoin = {67, 69, 70, 71, 72, 73}
+plusOneCard = {}
+plusOneMight = {68}
+plusOneInsight = {68}
+plusOneDamage = {73}
+
 class Game:
     def __init__(self):
         self.market_deck = Deck()
@@ -17,12 +23,31 @@ class Game:
     def morning(self):
         starter = self.firstPlayer
 
-    def next_turn(self):
+    def next_turn(self): #assumes turn isn't 0
         if (self.current_turn == 4):
             self.current_turn = 1
         
         else:
             self.current_turn += 1
+    def speculate_over(self):
+        for p in self.players:
+            if (p.speculate == -2):
+                return False
+        return True
+    
+    def play_card(self, card, player):
+        if (card in plusOneCoin):
+            player.coins += 1
+        if (card in plusOneDamage):
+            player.damage += 1
+        if (card in plusOneMight):
+            player.might += 1
+        if (card in plusOneInsight):
+            player.insight += 1
+        if (card in plusOneCard):
+            player.hand.append(player.deck.draw())
+
+        
 
         
 

@@ -40,6 +40,14 @@ function App() {
   };
 
 
+  const handlePlayCard = async (player, index) => {
+    if (handleButtonError(2) == 0){
+      const response = await fetch(`http://localhost:5000/api/play/${player}/${index}`);
+      console.log(response)
+    }
+  }
+
+
   useEffect(() => {
     fetchState();
     const interval = setInterval(fetchState, 2000); // Polling every 2 seconds
@@ -58,9 +66,13 @@ const handleRightClick = (e, cardIndex) => {
 
 
 
-const handleButtonError = (buttonType) => { //0 = speculate, 1 = purchase
+const handleButtonError = (buttonType) => { //0 = speculate, 1 = purchase, 2 = playerCard
     if (buttonType == 1 && gameState.phase ==0){
       setPopupText("You cannot buy during the speculate phase")
+      return 1;
+    }
+    if (buttonType == 2 && gameState.phase !== 1){
+      setPopupText("You can only play during the play phase")
       return 1;
     }
     return 0;
@@ -123,11 +135,14 @@ function Market({ market }) {
               alt={`Card ${card}`}
               onContextMenu={(e) => handleRightClick(e, card)} 
             />
-            <button onClick={() => handleButttonPress(0, index+4)}>Speculate</button>
-            <button onClick={() => handleButttonPress(1, index+4)}>Purchase</button>
+            <button onClick={() => handleButtonPress(0, index+4)}>Speculate</button>
+            <button onClick={() => handleButtonPress(1, index+4)}>Purchase</button>
 
           </div>
         ))}
+      </div>
+      <div className='market-row'>
+            <button onClick={() => handleButtonPress(0, -1)}>Decline to Speculate</button>
       </div>
     </div>
   );
@@ -148,6 +163,8 @@ function PlayerBoard({ player }) {
         </div>
 
         <div className={`stats-list ${player["id"] === 1 || player["id"] === 4 ? 'left-side' : ''}`}>
+          <div className="stat-item">Player {player["id"]}</div>
+          <div className="stat-item">Coins: {player["coins"]}</div>
           <div className="stat-item">HP: {player["hp"]}</div>
           <div className="stat-item">Shield: {player["shield"]}</div>
           <div className="stat-item">Might: {player["might"]}</div>
@@ -165,7 +182,8 @@ function PlayerBoard({ player }) {
             className="card"
             src={`assets/cards/${card}.jpg`}
             alt={`Card ${card}`}
-            onContextMenu={(e) => handleRightClick(e, card)} 
+            onContextMenu={(e) => handleRightClick(e, card)}
+            onClick={() => handlePlayCard(player.id, index)} 
           />
         ))}
       </div>

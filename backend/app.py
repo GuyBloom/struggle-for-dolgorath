@@ -10,28 +10,28 @@ game = Game()
 
 @app.route('/api/speculate', methods=['POST'])
 def speculate_move():
-    # Get data from the frontend
     data = request.get_json()
 
-    # Process the request (simulate waiting for input from frontend)
-    if data.get('index') >-1:
+    if data.get('index') >=-1:
         card = data.get('index')
         print(f"Current turn: {game.current_turn}")
 
         game.players[game.current_turn-1].speculate = card
+        if (game.speculate_over()):
+            game.phase = 1
+            game.current_turn = 0
+            return jsonify({"status": "success", "message": "Successfully speculated, moving to play phase "})
         game.next_turn()
-        # Respond back with the result
         return jsonify({"status": "success", "message": "Successfully speculated "})
-    elif data.get('index') == -1:
-        game.current_turn = game.next_turn(game.current_turn)
-        return jsonify({"status": "success", "message": "Successfully declined speculation "})
     else:
         return jsonify({"status": "error", "message": "Invalid action!"})
     
 
-@app.route("/api/play/<int:player_id>/<int:card_index>")
-def play(player_id, card_index):
-    result = game.play_card(player_id, card_index)
+@app.route("/api/play/<int:player>/<int:card_index>")
+def play(player, card_index):
+    card = game.players[player-1].hand[card_index]
+    game.players[player-1].hand.pop(card_index)
+    result = game.play_card(card, game.players[player-1])
     return jsonify(result)
 
 @app.route("/api/state")
