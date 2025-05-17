@@ -17,11 +17,11 @@ class Player:
         self.insight = 0
         self.forest = 0
         self.hand = []
-        self.speculate = 0 #1-8 indicates market placement, 0 indicates not speculating on anything
+        self.speculate = -2 #0-7 indicates market placement, -1 indicates refused, -2 indicates not speculated yet
         for _ in range(5): self.hand.append(self.deck.draw())
     def to_dict(self):
         return {
-            "speculaute": self.speculate,
+            "speculate": self.speculate,
             "board": self.board,
             "might": self.might,
             "insight": self.insight,

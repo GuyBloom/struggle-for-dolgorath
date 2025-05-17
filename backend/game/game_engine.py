@@ -1,19 +1,30 @@
 from .deck import Deck
 from .player import Player
-
+#turn order: 1 ->2 -> 4 -> 3 -> 1
 
 class Game:
     def __init__(self):
         self.market_deck = Deck()
+        self.hasSpeculated = []
+        self.firstPlayer = 1
         self.market_deck.market_init()
         self.market = []
         for _ in range(8): self.market.append(self.market_deck.draw())
-        self.players = [Player(1), Player(2), Player(3), Player(4)] # 1 & 2 vs 3 & 4; 1 vs 3, 2 vs 4
-        self.current_turn = 0
+        self.players = [Player(1), Player(2), Player(3), Player(4)] # 1 & 2 vs 3 & 4; 1 vs 4, 2 vs 3
+        self.current_turn = 1 #0 is play phase, 1-4 correspond to player turns for morning and action
         self.phase = 0 #0 = morning, 1 = play, 2 = action, 3 = cleanup
 
-    
+    def morning(self):
+        starter = self.firstPlayer
 
+    def next_turn(self):
+        if (self.current_turn == 4):
+            self.current_turn = 1
+        
+        else:
+            self.current_turn += 1
+
+        
 
     # def initialize_hands(self):
     #     """Deal 4 cards to each player at the start of the game."""
@@ -53,7 +64,9 @@ class Game:
     def get_state(self):
         """Get the current game state (whose turn, hands)."""
         return {
+            "phase": self.phase,
             "current_turn": self.current_turn,
+            "first_player": self.firstPlayer,
             "market_deck": self.market_deck.cards,
             "market": self.market,
             "players": [player.to_dict() for player in self.players]

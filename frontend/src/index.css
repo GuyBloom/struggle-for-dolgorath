@@ -14,6 +14,32 @@
     .bottom-player-row {
       order: 3;
     }
+    .state-header {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      background-color: #ccc;
+    }
+
+
+    .market-card-wrapper {
+      display: flex;
+      flex-direction: column
+    }
+    .market-buttons-row {
+      display: flex;
+      flex-direction: row;
+    }
+
+    .popup-box {
+      display: flex;
+      justify-content: center;
+      padding-block: 10px;
+      padding-left: 10px;
+      padding-right: 10px;
+      align-content: center;
+      background-color: #ccc;
+    }
     .market-row {
       display: flex;
       justify-content: center;

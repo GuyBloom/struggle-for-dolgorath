@@ -3,6 +3,35 @@ import { useEffect, useState } from 'react';
 function App() {
   const [gameState, setGameState] = useState(null);
   const [zoomedCardIndex, setZoomedCardIndex] = useState(null);
+  const [popupText, setPopupText] = useState(null);
+
+
+  const displaySpeculate = (spec) => {
+    if (spec ==-2){
+      return "Not speculated yet"
+    }
+    else if (spec == -1){
+      return "Refused to speculate"
+    }
+    else{
+      return `${gameState.market[spec]} (Position ${spec})`
+    }
+  };
+
+  const displayPhase = (phase) => {
+    if (phase ==0){
+      return "Speculate"
+    }
+    else if (phase == 1){
+      return "Play"
+    }
+    else if (phase == 2){
+      return "Action"
+    }
+    else{
+      return "Cleanup"
+    }
+  };
 
   const fetchState = async () => {
     const res = await fetch("http://localhost:5000/api/state");
@@ -27,67 +56,83 @@ const handleRightClick = (e, cardIndex) => {
     setZoomedCardIndex(cardIndex); 
   };
 
-function Market({ market }){
+
+
+const handleButtonError = (buttonType) => { //0 = speculate, 1 = purchase
+    if (buttonType == 1 && gameState.phase ==0){
+      setPopupText("You cannot buy during the speculate phase")
+      return 1;
+    }
+    return 0;
+}
+
+
+const handleButtonPress = (buttonType, index) => {
+  if (handleButtonError(buttonType) == 0){
+    if (buttonType == 0){
+      handleSpeculate(index)
+    }
+  }
+  
+}
+
+const handleSpeculate = async (card) => {
+  // Sending some data (e.g., card index or player move)
+  const response = await fetch('http://localhost:5000/api/speculate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ index: card })
+  });
+
+  const result = await response.json();
+  console.log(result);
+};
+
+
+
+
+function Market({ market }) {
   return (
     <div className="market-container" id="market">
-      <div className="market-row" id="market-row-1">
-          <img
-            className="card"
-            src={`assets/cards/${market[0]}.jpg`}
-            alt={`Card ${market[0]}`}
-            onContextMenu={(e) => handleRightClick(e, market[0])} 
-          />
-          <img
-            className="card"
-            src={`assets/cards/${market[1]}.jpg`}
-            alt={`Card ${market[1]}`}
-            onContextMenu={(e) => handleRightClick(e, market[1])} 
-          />
-          <img
-            className="card"
-            src={`assets/cards/${market[2]}.jpg`}
-            alt={`Card ${market[2]}`}
-            onContextMenu={(e) => handleRightClick(e, market[2])} 
-          />
-          <img
-            className="card"
-            src={`assets/cards/${market[3]}.jpg`}
-            alt={`Card ${market[3]}`}
-            onContextMenu={(e) => handleRightClick(e, market[3])} 
-          />
-      </div>
-      <div className="market-row" id="market-row-2">
-          <img
-            className="card"
-            src={`assets/cards/${market[4]}.jpg`}
-            alt={`Card ${market[4]}`}
-            onContextMenu={(e) => handleRightClick(e, market[4])} 
-          />
-          <img
-            className="card"
-            src={`assets/cards/${market[5]}.jpg`}
-            alt={`Card ${market[5]}`}
-            onContextMenu={(e) => handleRightClick(e, market[5])} 
-          />
-          <img
-            className="card"
-            src={`assets/cards/${market[6]}.jpg`}
-            alt={`Card ${market[6]}`}
-            onContextMenu={(e) => handleRightClick(e, market[6])} 
-          />
-          <img
-            className="card"
-            src={`assets/cards/${market[7]}.jpg`}
-            alt={`Card ${market[7]}`}
-            onContextMenu={(e) => handleRightClick(e, market[7])} 
-          />
+      <div className="market-row">
+        {market.slice(0, 4).map((card, index) => (  // First 4 cards
+          <div className='market-card-wrapper' key={index}>
+            <img
+              key={index}
+              className="card"
+              src={`assets/cards/${card}.jpg`}
+              alt={`Card ${card}`}
+              onContextMenu={(e) => handleRightClick(e, card)} 
+            />
+            <button onClick={() => handleButtonPress(0, index)}>Speculate</button>
+            <button onClick={() => handleButtonPress(1, index)}>Purchase</button>
+            
+          </div>
+        ))}
       </div>
 
+      <div className="market-row">
+        {market.slice(4, 8).map((card, index) => (  // Next 4 cards
+          <div className='market-card-wrapper' key ={index+4}>
+            <img
+              key={index}
+              className="card"
+              src={`assets/cards/${card}.jpg`}
+              alt={`Card ${card}`}
+              onContextMenu={(e) => handleRightClick(e, card)} 
+            />
+            <button onClick={() => handleButttonPress(0, index+4)}>Speculate</button>
+            <button onClick={() => handleButttonPress(1, index+4)}>Purchase</button>
 
-      
+          </div>
+        ))}
+      </div>
     </div>
-  )
+  );
 }
+
 
 function PlayerBoard({ player }) {
   return (
@@ -102,12 +147,14 @@ function PlayerBoard({ player }) {
           />
         </div>
 
-        <div className={`stats-list ${player["id"] === 1 || player["id"] === 3 ? 'left-side' : ''}`}>
+        <div className={`stats-list ${player["id"] === 1 || player["id"] === 4 ? 'left-side' : ''}`}>
           <div className="stat-item">HP: {player["hp"]}</div>
           <div className="stat-item">Shield: {player["shield"]}</div>
           <div className="stat-item">Might: {player["might"]}</div>
           <div className="stat-item">Insight: {player["insight"]}</div>
           <div className="stat-item">DMG: {player["damage"]}</div>
+          <div className="stat-item">Speculate: {displaySpeculate(player["speculate"])}</div>
+
         </div>
       </div>
 
@@ -129,10 +176,13 @@ function PlayerBoard({ player }) {
   //code to run
   if (!gameState) return <p>Loading...</p>;
 
-console.log(gameState.players[0]["hand"])
 
  return (
   <>
+  <div className='state-header'>
+    <div>Phase: {displayPhase(gameState.phase)}</div>
+    <div>Turn: Player {gameState.current_turn}</div>
+  </div>
   <div className="game-container" id="game-container">
 
     <PlayerBoard key="1" player={gameState.players[0]}/>
@@ -140,19 +190,39 @@ console.log(gameState.players[0]["hand"])
     <div className="market-container" id = "market-container">
       <Market market={gameState.market} />
     </div>
-    <PlayerBoard key="3" player={gameState.players[2]}/>
-    <PlayerBoard key="4" player={gameState.players[3]}/>
+    <PlayerBoard key="3" player={gameState.players[3]}/>
+    <PlayerBoard key="4" player={gameState.players[2]}/>
 
 
 
 
   </div>
   
- 
+    {popupText !== null && ( //error popup
+      <div
+        onClick={() => setPopupText(null)} // click anywhere to close zoom
+
+        style={{
+          position: 'fixed',
+          top: 0, left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)', // semi-transparent black
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          cursor: 'zoom-out'
+        }}
+      >
+        <div className='popup-box'> {popupText}</div>'
+      </div>
+    )}
 
     {zoomedCardIndex !== null && ( //card zoom
       <div
         onClick={() => setZoomedCardIndex(null)} // click anywhere to close zoom
+
         style={{
           position: 'fixed',
           top: 0, left: 0,
@@ -178,6 +248,11 @@ console.log(gameState.players[0]["hand"])
         />
       </div>
     )}
+
+
+
+    
+
   </>
 );
 
