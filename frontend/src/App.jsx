@@ -50,7 +50,7 @@ function App() {
 
   useEffect(() => {
     fetchState();
-    const interval = setInterval(fetchState, 2000); // Polling every 2 seconds
+    const interval = setInterval(fetchState, 500); // Polling every 2 seconds
     return () => clearInterval(interval);
   }, []);
 
@@ -108,6 +108,22 @@ const handleSpeculate = async (card) => {
 function Market({ market }) {
   return (
     <div className="market-container" id="market">
+      <div className='deck-container'>
+
+      </div>
+      <div className='deck-container'>
+              <div className='deck-header'>
+                {gameState.market_deck.length}
+              </div>
+              {market.length > 0 && (
+                <img
+                className="card"
+                src={`assets/cards/51.jpg`}
+                alt={`Card back}`}
+              />
+              )}
+            
+            </div>
       <div className="market-row">
         {market.slice(0, 4).map((card, index) => (  // First 4 cards
           <div className='market-card-wrapper' key={index}>
@@ -154,14 +170,67 @@ function PlayerBoard({ player }) {
     <div className="player-board-container" id={`player-board-${player["id"]}`}>
       <div className="player-board-wrapper">
         <div className="player-board">
-          <img
+          {/* <img
             className={`player-mat ${player["id"] === 1 || player["id"] === 2 ? 'upside-down' : ''}`}
 
             src={player["board"]}
             alt={`Player ${player["id"]} board`}
-          />
-        </div>
+          /> */}
 
+
+          
+          <div className='discard-deck-row'>
+            <div className='deck-container'>
+              <div className='deck-header'>
+                {player.discard.length}
+              </div>
+              {player.discard.length > 0 && (
+                <img
+                className="card"
+                src={`assets/cards/51.jpg`}
+                alt={`Card back}`}
+              />
+              )}
+              {player.discard.length == 0 && (
+                <img
+                className="card"
+                src={`assets/cards/92.jpg`}
+                alt={`Card back}`}
+              />
+              )}
+            </div>
+            <div className='deck-container'>
+              <div className='deck-header'>
+                {player.deck.length}
+              </div>
+              {player.deck.length > 0 && (
+                <img
+                className="card"
+                src={`assets/cards/51.jpg`}
+                alt={`Card back}`}
+              />
+              )}
+              {player.deck.length == 0 && (
+                <img
+                className="card"
+                src={`assets/cards/93.jpg`}
+                alt={`Card back}`}
+              />
+              )}
+            </div>
+          </div>
+        </div>
+        <div className='play-container'>
+            {player.played.map((card, index) => (
+              <img
+                key={index}
+                className="card"
+                src={`assets/cards/${card}.jpg`}
+                alt={`Card ${card}`}
+                onContextMenu={(e) => handleRightClick(e, card)}
+              />
+            ))}
+          </div>
         <div className={`stats-list ${player["id"] === 1 || player["id"] === 4 ? 'left-side' : ''}`}>
           <div className="stat-item">Player {player["id"]}</div>
           <div className="stat-item">Coins: {player["coins"]}</div>
@@ -187,6 +256,11 @@ function PlayerBoard({ player }) {
           />
         ))}
       </div>
+      <img 
+      className="token"
+      src={`assets/cards/95.jpg`}
+      ></img>
+      
     </div>
   );
 }
