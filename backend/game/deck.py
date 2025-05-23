@@ -25,6 +25,10 @@ class Deck:
         self.shuffle()
         self.type = 1
 
+    def addOnTop(self, card):
+        self.cards.append(card)
+    
+
     def clear(self):
         self.cards = []
 

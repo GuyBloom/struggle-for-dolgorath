@@ -66,40 +66,57 @@ const handleRightClick = (e, cardIndex) => {
 
 
 
-const handleButtonError = (buttonType) => { //0 = speculate, 1 = purchase, 2 = playerCard
-    if (buttonType == 1 && gameState.phase ==0){
-      setPopupText("You cannot buy during the speculate phase")
+const handleButtonError = (buttonType) => { //0 = speculate, 1 = purchase, 2 = playerCard, 3 = token
+    if (buttonType == 1 && gameState.phase !=2){
+      setPopupText("You can only buy during the action phase")
       return 1;
     }
     if (buttonType == 2 && gameState.phase !== 1){
       setPopupText("You can only play during the play phase")
       return 1;
     }
+    if (buttonType == 3 && (gameState.phase !== 1 && gameState.phase != 2)){
+      setPopupText("You can only flip your token during the play or action phase")
+      return 1;
+    }
     return 0;
 }
 
 
-const handleButtonPress = (buttonType, index) => {
+const handleButtonPress = (buttonType, index) => { //0 = speculate, 1 = purchase, 2 = playerCard, 3 = token
   if (handleButtonError(buttonType) == 0){
     if (buttonType == 0){
       handleSpeculate(index)
+    }
+    if (buttonType == 1){
+      handlePurchase(index)
     }
   }
   
 }
 
 const handleSpeculate = async (card) => {
-  // Sending some data (e.g., card index or player move)
-  const response = await fetch('http://localhost:5000/api/speculate', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ index: card })
-  });
+  const response = await fetch(`http://localhost:5000/api/speculate/${card}`);
 
   const result = await response.json();
   console.log(result);
+};
+
+
+const handlePurchase = async (card) => {
+  let cost = 3 //will change
+  if (gameState.players[gameState.current_turn - 1].speculate == card) cost -=1 
+
+  if (gameState.players[gameState.current_turn - 1]["coins"] < cost){
+    setPopupText("You do not have enough coins to buy this")
+  }
+  else{
+    const response = await fetch(`http://localhost:5000/api/purchase/${card}/${cost}`);
+
+    const result = await response.json();
+    console.log(result);
+  }
+  
 };
 
 
@@ -125,7 +142,7 @@ function Market({ market }) {
             
             </div>
       <div className="market-row">
-        {market.slice(0, 4).map((card, index) => (  // First 4 cards
+        {market.slice(0, 4).map((card, index) => ( 
           <div className='market-card-wrapper' key={index}>
             <img
               key={index}
@@ -134,8 +151,14 @@ function Market({ market }) {
               alt={`Card ${card}`}
               onContextMenu={(e) => handleRightClick(e, card)} 
             />
-            <button onClick={() => handleButtonPress(0, index)}>Speculate</button>
-            <button onClick={() => handleButtonPress(1, index)}>Purchase</button>
+            <div className='market-buttons'>
+              {card !== 97 && (
+                <>
+                  <button onClick={() => handleButtonPress(0, index)}>Speculate</button>
+                  <button onClick={() => handleButtonPress(1, index)}>Purchase</button>
+                </>
+              )}
+            </div>
             
           </div>
         ))}
@@ -151,9 +174,14 @@ function Market({ market }) {
               alt={`Card ${card}`}
               onContextMenu={(e) => handleRightClick(e, card)} 
             />
-            <button onClick={() => handleButtonPress(0, index+4)}>Speculate</button>
-            <button onClick={() => handleButtonPress(1, index+4)}>Purchase</button>
-
+            <div className='market-buttons'>
+              {card !== 97 && (
+                <>
+                  <button onClick={() => handleButtonPress(0, index)}>Speculate</button>
+                  <button onClick={() => handleButtonPress(1, index)}>Purchase</button>
+                </>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -163,7 +191,41 @@ function Market({ market }) {
     </div>
   );
 }
+function Token ( {player} ){
+  const [t, setT] = useState(95);
+  useEffect(() => {
+    if (player.token === 0) {
+      setT(96); 
+    } else if (player.token === 1) {
+      setT(95); 
+    }
+  }, [player.token]); 
 
+
+  const handleFlipError = (player) => {
+    if (gameState.phase == 1) return 0
+    if (gameState.current_turn == player.id) return 0
+    setPopupText("You cannot flip when it is not your turn")
+    return 1
+  }
+  const Flip = async (player) => {
+
+    if (handleButtonError(3) == 0 && handleFlipError(player) == 0){
+      await fetch(`http://localhost:5000/api/${player.id}/flip`);
+      for (let i = 0; i < 4; ++i){
+        console.log(`Player ${i+1}: ${gameState.players[i].token}`)
+      }
+    }
+  };
+  
+  return (
+    <img 
+    className='token'
+    src={`assets/cards/${t}.jpg`}
+    onClick={() => Flip(player.id)}
+    ></img>
+  )
+}
 
 function PlayerBoard({ player }) {
   return (
@@ -256,11 +318,7 @@ function PlayerBoard({ player }) {
           />
         ))}
       </div>
-      <img 
-      className="token"
-      src={`assets/cards/95.jpg`}
-      ></img>
-      
+      <Token key={player.id} player={player}></Token>
     </div>
   );
 }
@@ -273,7 +331,7 @@ function PlayerBoard({ player }) {
   <>
   <div className='state-header'>
     <div>Phase: {displayPhase(gameState.phase)}</div>
-    <div>Turn: Player {gameState.current_turn}</div>
+    {gameState.phase != 1 && (<div>Turn: Player {gameState.current_turn}</div>)}
   </div>
   <div className="game-container" id="game-container">
 

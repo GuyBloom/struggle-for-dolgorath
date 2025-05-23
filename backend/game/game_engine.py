@@ -1,12 +1,14 @@
 from .deck import Deck
 from .player import Player
 #turn order: 1 ->2 -> 4 -> 3 -> 1
-
+costs = {3} #placeholder; will be dictionary from card indices to card costs
 plusOneCoin = {67, 69, 70, 71, 72, 73}
 plusOneCard = {}
 plusOneMight = {68}
 plusOneInsight = {68}
 plusOneDamage = {73}
+
+
 
 class Game:
     def __init__(self):
@@ -19,6 +21,8 @@ class Game:
         self.players = [Player(1), Player(2), Player(3), Player(4)] # 1 & 2 vs 3 & 4; 1 vs 4, 2 vs 3
         self.current_turn = 1 #0 is play phase, 1-4 correspond to player turns for morning and action
         self.phase = 0 #0 = morning, 1 = play, 2 = action, 3 = cleanup
+        for p in self.players: print(f"Player {p.id}: Token: {p.token}")
+
 
     def morning(self):
         starter = self.firstPlayer
@@ -34,6 +38,25 @@ class Game:
             if (p.speculate == -2):
                 return False
         return True
+    def play_over(self):
+        print("Checking if play is over:")
+        for p in self.players: print(f"Player {p.id}: Token: {p.token}")
+
+        for p in self.players:
+            if (p.token == 0):
+                print("It's not over")
+                return False
+        print("It's over")
+        return True
+    
+
+    def purchase(self, card, player, cost): #card is given as index into market
+        self.players[player-1].coins -= cost
+        self.players[player-1].discard.addOnTop(self.market[card])
+        self.market[card] = 97
+            
+        
+
     
     def play_card(self, card, player):
         if (card in plusOneCoin):
@@ -46,6 +69,14 @@ class Game:
             player.insight += 1
         if (card in plusOneCard):
             player.hand.append(player.deck.draw())
+
+    def flip(self, player):
+        if (self.players[player-1].token == 0):
+            self.players[player-1].token = 1
+    
+        elif (self.players[player-1].token == 1):
+            self.players[player-1].token = 0
+
 
         
 
