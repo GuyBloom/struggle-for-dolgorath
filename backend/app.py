@@ -10,11 +10,9 @@ game = Game()
 
 @app.route('/api/speculate/<int:index>')
 def speculate_move(index):
-
-    if index >=-1:
+    if index >= 0:
         card = index
         print(f"Current turn: {game.current_turn}")
-
         game.players[game.current_turn-1].speculate = card
         if (game.speculate_over()):
             game.phase = 1
@@ -31,9 +29,18 @@ def purchase_move(index, cost):
         card = index
         print(f"Current turn: {game.current_turn}")
         game.purchase(index, game.current_turn, cost)
-        game.players[game.current_turn-1].speculate = card
         game.next_turn()
-        return jsonify({"status": "success", "message": "Successfully speculated "})
+        return jsonify({"status": "success", "message": "Successfully purchased "})
+    else:
+        return jsonify({"status": "error", "message": "Invalid action!"})
+
+@app.route('/api/tap/<int:player>/<int:index>')
+def tap_move(index, player):
+    if index >=0:
+        game.tap(index, player)
+        if (game.phase == 2):
+            game.next_turn()
+        return jsonify({"status": "success", "message": "Successfully tapped"})
     else:
         return jsonify({"status": "error", "message": "Invalid action!"})
 

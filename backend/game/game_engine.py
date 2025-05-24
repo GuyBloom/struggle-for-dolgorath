@@ -54,6 +54,24 @@ class Game:
         self.players[player-1].coins -= cost
         self.players[player-1].discard.addOnTop(self.market[card])
         self.market[card] = 97
+    def tap(self, index, player):
+        self.players[player-1].coins -= 1
+        match index:
+            case 0:
+                self.players[player-1].damage += 3
+                self.players[player-1].tapped[0] = 1
+            case 1:
+                self.players[player-1].hp += 4
+                self.players[player-1].tapped[1] = 1
+
+            case 2:
+                self.players[player-1].insight += 1
+                self.players[player-1].tapped[2] = 1
+            case 3:
+                self.players[player-1].might += 1
+                self.players[player-1].tapped[3] = 1
+        
+            
             
         
 

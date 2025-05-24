@@ -10,7 +10,7 @@ function App() {
     if (spec ==-2){
       return "Not speculated yet"
     }
-    else if (spec == -1){
+    else if (spec == 8){
       return "Refused to speculate"
     }
     else{
@@ -18,6 +18,8 @@ function App() {
     }
   };
 
+
+  
   const displayPhase = (phase) => {
     if (phase ==0){
       return "Speculate"
@@ -46,7 +48,25 @@ function App() {
       console.log(response)
     }
   }
-
+  const handleTap = async (player, index) =>{
+    if (gameState.phase == 0){
+      setPopupText("You cannot tap your talisman in the speculate phase")
+    }
+    else if (gameState.phase == 2 && gameState.current_turn !== player){
+      setPopupText("It is not your turn")
+    }
+    else if (gameState.players[player - 1]["coins"] < 1){
+      setPopupText("You do not have enough coins to tap")
+    }
+    else {
+      const response = await fetch(`http://localhost:5000/api/tap/${player}/${index}`); // 0 = damage, 1 = health, 2 = insight, 3 = might
+      const result = await response.json();
+      console.log(result);
+    }
+    
+    
+  }
+    
 
   useEffect(() => {
     fetchState();
@@ -66,7 +86,7 @@ const handleRightClick = (e, cardIndex) => {
 
 
 
-const handleButtonError = (buttonType) => { //0 = speculate, 1 = purchase, 2 = playerCard, 3 = token
+const handleButtonError = (buttonType) => { //0 = speculate, 1 = purchase, 2 = playerCard, 3 = token, 4 = talisman
     if (buttonType == 1 && gameState.phase !=2){
       setPopupText("You can only buy during the action phase")
       return 1;
@@ -75,10 +95,11 @@ const handleButtonError = (buttonType) => { //0 = speculate, 1 = purchase, 2 = p
       setPopupText("You can only play during the play phase")
       return 1;
     }
-    if (buttonType == 3 && (gameState.phase !== 1 && gameState.phase != 2)){
+    if (buttonType == 3 && (gameState.phase !== 1 && gameState.phase !== 2)){
       setPopupText("You can only flip your token during the play or action phase")
       return 1;
     }
+    
     return 0;
 }
 
@@ -186,7 +207,7 @@ function Market({ market }) {
         ))}
       </div>
       <div className='market-row'>
-            <button onClick={() => handleButtonPress(0, -1)}>Decline to Speculate</button>
+            <button onClick={() => handleButtonPress(0, 8)}>Decline to Speculate</button>
       </div>
     </div>
   );
@@ -231,7 +252,21 @@ function PlayerBoard({ player }) {
   return (
     <div className="player-board-container" id={`player-board-${player["id"]}`}>
       <div className="player-board-wrapper">
+        
         <div className="player-board">
+          <div className='talisman-container'>
+              {player.talismans.map((card, index) => (
+                
+              <img
+                key={index}
+                className="card"
+                src={`assets/cards/${card}.jpg`}
+                alt={`Talisman ${card}`}
+                onContextMenu={(e) => handleRightClick(e, card)}
+                onClick={() => handleTap(player.id, index)}
+              />
+            ))}
+        </div>
           {/* <img
             className={`player-mat ${player["id"] === 1 || player["id"] === 2 ? 'upside-down' : ''}`}
 
@@ -282,6 +317,7 @@ function PlayerBoard({ player }) {
             </div>
           </div>
         </div>
+        
         <div className='play-container'>
             {player.played.map((card, index) => (
               <img

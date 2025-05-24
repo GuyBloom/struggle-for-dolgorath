@@ -42,7 +42,10 @@
       padding: 0;
       background-color: #ccc;
     }
-
+    .talisman-container {
+      display: flex;
+      flex-direction:row;
+    }
 
     .market-card-wrapper {
       display: flex;

@@ -20,6 +20,8 @@ class Player:
         self.discard = Deck()
         self.token = 0 #0 = passed, 1 = ready
         self.played = []
+        self.talismans = [63, 64, 65, 66]
+        self.tapped = [0, 0, 0, 0] #0 indicates untapped, 1 indicates tapped
         self.speculate = -2 #0-7 indicates market placement, -1 indicates refused, -2 indicates not speculated yet
         for _ in range(5): self.hand.append(self.deck.draw())
     def to_dict(self):
@@ -38,6 +40,7 @@ class Player:
             "forest": self.forest,
             "hand": self.hand,
             "played": self.played,
-            "discard": self.discard.cards
+            "discard": self.discard.cards,
+            "talismans": self.talismans
         }
 
