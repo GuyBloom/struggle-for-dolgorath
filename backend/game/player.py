@@ -6,9 +6,8 @@ boards = ["assets/player-boards/p1.jpg", "assets/player-boards/p2.jpg", "assets/
 class Player:
     def __init__(self, player_num):
         self.id = player_num
-        self.deck = Deck()
+    
         self.board = boards[player_num-1]
-        self.deck.player_init()
         self.hp = 60
         self.shield = 0
         self.coins = 0
@@ -18,14 +17,31 @@ class Player:
         self.forest = 0
         self.hand = []
         self.discard = Deck()
+        self.deck = Deck(self.discard)
+        self.deck.player_init()
         self.token = 0 #0 = passed, 1 = ready
         self.played = []
         self.talismans = [63, 64, 65, 66]
         self.tapped = [0, 0, 0, 0] #0 indicates untapped, 1 indicates tapped
         self.speculate = -2 #0-7 indicates market placement, -1 indicates refused, -2 indicates not speculated yet
         for _ in range(5): self.hand.append(self.deck.draw())
+    
+
+    def cleanup(self):
+        print(f"Attempting to clean player {self.id}")
+        self.damage = 0
+        self.coins = 0
+        self.shield = 0
+        self.tapped = [0, 0, 0, 0] #0 indicates untapped, 1 indicates tapped
+        while len(self.played) > 0:
+            self.discard.addOnTop(self.played.pop())
+        while len(self.hand) > 0:
+            self.discard.addOnTop(self.hand.pop())
+        for _ in range(5): self.hand.append(self.deck.draw())
+
     def to_dict(self):
         return {
+            "tapped": self.tapped,
             "token": self.token,
             "speculate": self.speculate,
             "board": self.board,

@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react';
+import { io } from 'socket.io-client'; 
+
 
 function App() {
   const [gameState, setGameState] = useState(null);
   const [zoomedCardIndex, setZoomedCardIndex] = useState(null);
   const [popupText, setPopupText] = useState(null);
 
+
+  const socket = io('http://localhost:5000', {
+    transports: ['websocket'],  
+  });
 
   const displaySpeculate = (spec) => {
     if (spec ==-2){
@@ -35,21 +41,43 @@ function App() {
     }
   };
 
-  const fetchState = async () => {
-    const res = await fetch("http://localhost:5000/api/state");
-    const data = await res.json();
-    setGameState(data);
-  };
+  
 
 
   const handlePlayCard = async (player, index) => {
     if (handleButtonError(2) == 0){
-      const response = await fetch(`http://localhost:5000/api/play/${player}/${index}`);
+      const response = await fetch(`http://localhost:5000/api/play/${player}/${index}`, {
+            method: 'POST'
+
+      });
       console.log(response)
+    }
+    
+  }
+  
+  const handleDamage = async (player) =>{
+    if (gameState.phase !== 2){
+      setPopupText("You can only do damage in the action phase")
+    }
+    else if(gameState.current_turn != player){
+      setPopupText("You can only do damage during your turn")
+    }
+    else if (gameState.players[gameState.current_turn -1].damage == 0){
+      setPopupText("You have no damage")
+    }
+    else {
+      const response = await fetch(`http://localhost:5000/api/damage/${player}`, {
+          method: 'POST'
+      });
+      const result = await response.json();
+      console.log(result);
     }
   }
   const handleTap = async (player, index) =>{
-    if (gameState.phase == 0){
+    if (gameState.players[player-1].tapped[index] == 1){
+      setPopupText("You cannot tap your talisman twice in the same turn")
+    }
+    else if (gameState.phase == 0){
       setPopupText("You cannot tap your talisman in the speculate phase")
     }
     else if (gameState.phase == 2 && gameState.current_turn !== player){
@@ -59,19 +87,29 @@ function App() {
       setPopupText("You do not have enough coins to tap")
     }
     else {
-      const response = await fetch(`http://localhost:5000/api/tap/${player}/${index}`); // 0 = damage, 1 = health, 2 = insight, 3 = might
+      const response = await fetch(`http://localhost:5000/api/tap/${player}/${index}`, {
+          method: 'POST'
+      }); // 0 = damage, 1 = health, 2 = insight, 3 = might
       const result = await response.json();
       console.log(result);
     }
+    
     
     
   }
     
 
   useEffect(() => {
-    fetchState();
-    const interval = setInterval(fetchState, 500); // Polling every 2 seconds
-    return () => clearInterval(interval);
+    socket.on('connect', () => {
+    console.log('Connected to WebSocket server');
+  });
+    socket.on('game_update', (newGameState) => {
+      setGameState(newGameState);  // Update the game state on the frontend
+    });
+
+    return () => {
+      socket.off('game_update');  // Clean up on unmount
+    };
   }, []);
 
   
@@ -87,7 +125,11 @@ const handleRightClick = (e, cardIndex) => {
 
 
 const handleButtonError = (buttonType) => { //0 = speculate, 1 = purchase, 2 = playerCard, 3 = token, 4 = talisman
-    if (buttonType == 1 && gameState.phase !=2){
+  if (buttonType == 0 && gameState.phase == 1){
+      setPopupText("You cannot speculate during the play phase")
+      return 1;
+    }  
+  if (buttonType == 1 && gameState.phase !=2){
       setPopupText("You can only buy during the action phase")
       return 1;
     }
@@ -117,10 +159,20 @@ const handleButtonPress = (buttonType, index) => { //0 = speculate, 1 = purchase
 }
 
 const handleSpeculate = async (card) => {
-  const response = await fetch(`http://localhost:5000/api/speculate/${card}`);
-
+  let currSpec = gameState.players[gameState.current_turn -1].speculate 
+  if (currSpec != -2 && currSpec != 8){
+    setPopupText("You are already speculating")
+  }
+  else{
+      const response = await fetch(`http://localhost:5000/api/speculate/${card}`, {
+      method: 'POST',  
+  });
   const result = await response.json();
   console.log(result);
+  }
+  
+
+  
 };
 
 
@@ -132,7 +184,9 @@ const handlePurchase = async (card) => {
     setPopupText("You do not have enough coins to buy this")
   }
   else{
-    const response = await fetch(`http://localhost:5000/api/purchase/${card}/${cost}`);
+    const response = await fetch(`http://localhost:5000/api/purchase/${card}/${cost}`, {
+          method: 'POST'
+    });
 
     const result = await response.json();
     console.log(result);
@@ -225,14 +279,17 @@ function Token ( {player} ){
 
   const handleFlipError = (player) => {
     if (gameState.phase == 1) return 0
-    if (gameState.current_turn == player.id) return 0
+    if (gameState.current_turn == player) return 0
     setPopupText("You cannot flip when it is not your turn")
     return 1
   }
   const Flip = async (player) => {
 
     if (handleButtonError(3) == 0 && handleFlipError(player) == 0){
-      await fetch(`http://localhost:5000/api/${player.id}/flip`);
+      await fetch(`http://localhost:5000/api/${player}/flip`, {
+            method: 'POST'
+
+      });
       for (let i = 0; i < 4; ++i){
         console.log(`Player ${i+1}: ${gameState.players[i].token}`)
       }
@@ -284,7 +341,7 @@ function PlayerBoard({ player }) {
               {player.discard.length > 0 && (
                 <img
                 className="card"
-                src={`assets/cards/51.jpg`}
+                src={`assets/cards/${player.discard[player.discard.length-1]}.jpg`}
                 alt={`Card back}`}
               />
               )}
@@ -355,6 +412,9 @@ function PlayerBoard({ player }) {
         ))}
       </div>
       <Token key={player.id} player={player}></Token>
+      <button onClick={() => handleDamage(player.id)}>Damage</button>
+
+      <button></button>
     </div>
   );
 }
@@ -367,7 +427,7 @@ function PlayerBoard({ player }) {
   <>
   <div className='state-header'>
     <div>Phase: {displayPhase(gameState.phase)}</div>
-    {gameState.phase != 1 && (<div>Turn: Player {gameState.current_turn}</div>)}
+    {(gameState.phase != 1 && gameState.phase != 3) && (<div>Turn: Player {gameState.current_turn}</div>)}
   </div>
   <div className="game-container" id="game-container">
 

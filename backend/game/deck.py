@@ -35,10 +35,12 @@ class Deck:
     def shuffle(self):
         random.shuffle(self.cards)
 
+
     def draw(self):
         if (self.cards):
             return self.cards.pop()
         elif self.dependency:
+            self.dependency.shuffle()
             self.cards = self.dependency.cards
             self.dependency.clear()
             return self.cards.pop()

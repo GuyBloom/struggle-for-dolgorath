@@ -8,17 +8,24 @@ plusOneMight = {68}
 plusOneInsight = {68}
 plusOneDamage = {73}
 
-
+versus = {
+    1: 2,
+    2: 3,
+    3: 0,
+    4: 1
+}
 
 class Game:
     def __init__(self):
+        self.team12 = [1, 2]
+        self.team34 = [3, 4]
         self.market_deck = Deck()
         self.hasSpeculated = []
         self.firstPlayer = 1
         self.market_deck.market_init()
         self.market = []
         for _ in range(8): self.market.append(self.market_deck.draw())
-        self.players = [Player(1), Player(2), Player(3), Player(4)] # 1 & 2 vs 3 & 4; 1 vs 4, 2 vs 3
+        self.players = [Player(1), Player(2), Player(3), Player(4)] # 1 & 2 vs 3 & 4; 1 vs 3, 2 vs 4
         self.current_turn = 1 #0 is play phase, 1-4 correspond to player turns for morning and action
         self.phase = 0 #0 = morning, 1 = play, 2 = action, 3 = cleanup
         for p in self.players: print(f"Player {p.id}: Token: {p.token}")
@@ -27,12 +34,48 @@ class Game:
     def morning(self):
         starter = self.firstPlayer
 
+    def damage(self, player):
+        dmg = self.players[player -1].damage
+        self.players[player -1].damage = 0
+        if player in self.team12:
+            if len(self.team34) == 2:
+                self.players[versus[player]].hp -= dmg
+            else:                
+                self.players[self.team34[0]-1].hp -= dmg
+        if player in self.team34:
+            if len(self.team12) == 2:
+                self.players[versus[player]].hp -= dmg
+            else:                
+                self.players[self.team12[0]-1].hp -= dmg
+        self.next_turn()
+
+    def cleanup(self):
+        self.phase = 3
+        self.current_turn = 0
+        print(f'Attempting to clean up' )
+        for p in self.players:
+            p.cleanup()
+        self.phase = 0
+        print("Successfully cleaned up")
+
+
     def next_turn(self): #assumes turn isn't 0
         if (self.current_turn == 4):
             self.current_turn = 1
         
         else:
             self.current_turn += 1
+
+
+        if (self.phase == 2):
+            if self.action_over():
+                print("Action phase over, cleaning up")
+                self.cleanup()
+            elif self.players[self.current_turn - 1].token == 0:
+                self.next_turn()
+
+            
+        
     def speculate_over(self):
         for p in self.players:
             if (p.speculate == -2):
@@ -49,11 +92,20 @@ class Game:
         print("It's over")
         return True
     
+    def action_over(self):
+        for p in self.players:
+            if (p.token == 1):
+                print("It's not over")
+                return False
+        print("It's over")
+        return True
+
 
     def purchase(self, card, player, cost): #card is given as index into market
         self.players[player-1].coins -= cost
         self.players[player-1].discard.addOnTop(self.market[card])
         self.market[card] = 97
+        self.next_turn()
     def tap(self, index, player):
         self.players[player-1].coins -= 1
         match index:
@@ -70,6 +122,9 @@ class Game:
             case 3:
                 self.players[player-1].might += 1
                 self.players[player-1].tapped[3] = 1
+        if (self.phase == 2):
+            self.next_turn()
+        
         
             
             
