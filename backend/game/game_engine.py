@@ -1,6 +1,7 @@
 from .deck import Deck
 from .player import Player
-#turn order: 1 ->2 -> 4 -> 3 -> 1
+from .market import Market
+#turn order: 1 ->2 -> 3 -> 4 -> 1
 costs = {3} #placeholder; will be dictionary from card indices to card costs
 plusOneCoin = {67, 69, 70, 71, 72, 73}
 plusOneCard = {}
@@ -23,8 +24,7 @@ class Game:
         self.hasSpeculated = []
         self.firstPlayer = 1
         self.market_deck.market_init()
-        self.market = []
-        for _ in range(8): self.market.append(self.market_deck.draw())
+        self.market = Market(self.market_deck)
         self.players = [Player(1), Player(2), Player(3), Player(4)] # 1 & 2 vs 3 & 4; 1 vs 3, 2 vs 4
         self.current_turn = 1 #0 is play phase, 1-4 correspond to player turns for morning and action
         self.phase = 0 #0 = morning, 1 = play, 2 = action, 3 = cleanup
@@ -56,6 +56,8 @@ class Game:
         for p in self.players:
             p.cleanup()
         self.phase = 0
+        self.market.cleanup()
+        self.current_turn = self.firstPlayer
         print("Successfully cleaned up")
 
 
@@ -103,8 +105,7 @@ class Game:
 
     def purchase(self, card, player, cost): #card is given as index into market
         self.players[player-1].coins -= cost
-        self.players[player-1].discard.addOnTop(self.market[card])
-        self.market[card] = 97
+        self.players[player-1].discard.addOnTop(self.market.purchase(card))
         self.next_turn()
     def tap(self, index, player):
         self.players[player-1].coins -= 1
@@ -143,12 +144,19 @@ class Game:
         if (card in plusOneCard):
             player.hand.append(player.deck.draw())
 
+    def firstPass(self):
+        for p in self.players:
+            if p.token == 0: return False
+        return True
     def flip(self, player):
+        if (self.phase == 2 and self.firstPlayer != player and self.firstPass()):
+            self.firstPlayer = player
         if (self.players[player-1].token == 0):
             self.players[player-1].token = 1
     
         elif (self.players[player-1].token == 1):
             self.players[player-1].token = 0
+
 
 
         
@@ -197,7 +205,7 @@ class Game:
             "current_turn": self.current_turn,
             "first_player": self.firstPlayer,
             "market_deck": self.market_deck.cards,
-            "market": self.market,
+            "market": self.market.to_dict(),
             "players": [player.to_dict() for player in self.players]
         }
     

@@ -26,7 +26,8 @@ def speculate_move(index):
     if index >= 0:
         card = index
         print(f"Current turn: {game.current_turn}")
-        game.players[game.current_turn-1].speculate = card
+        game.players[game.current_turn-1].speculate = card #will be removed; speculations will be stored in the market class, not the player class
+        game.market.speculate(game.current_turn-1, index)
         game.next_turn()
         if (game.phase == 0 and game.speculate_over()):
             game.phase = 1

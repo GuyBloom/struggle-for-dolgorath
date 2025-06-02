@@ -20,7 +20,7 @@ function App() {
       return "Refused to speculate"
     }
     else{
-      return `${gameState.market[spec]} (Position ${spec})`
+      return `Position ${spec}`
     }
   };
 
@@ -45,7 +45,10 @@ function App() {
 
 
   const handlePlayCard = async (player, index) => {
-    if (handleButtonError(2) == 0){
+    if (gameState.players[player-1].token == 1 && gameState.phase == 1){
+      setPopupText("You have already flipped your token")
+    }
+    else if (handleButtonError(2) == 0){
       const response = await fetch(`http://localhost:5000/api/play/${player}/${index}`, {
             method: 'POST'
 
@@ -74,7 +77,10 @@ function App() {
     }
   }
   const handleTap = async (player, index) =>{
-    if (gameState.players[player-1].tapped[index] == 1){
+    if (gameState.players[player-1].token == 1 && gameState.phase == 1){
+      setPopupText("You have already flipped your token")
+    }
+    else if (gameState.players[player-1].tapped[index] == 1){
       setPopupText("You cannot tap your talisman twice in the same turn")
     }
     else if (gameState.phase == 0){
@@ -217,7 +223,7 @@ function Market({ market }) {
             
             </div>
       <div className="market-row">
-        {market.slice(0, 4).map((card, index) => ( 
+        {market.cards.slice(0, 4).map((card, index) => ( 
           <div className='market-card-wrapper' key={index}>
             <img
               key={index}
@@ -240,7 +246,7 @@ function Market({ market }) {
       </div>
 
       <div className="market-row">
-        {market.slice(4, 8).map((card, index) => (  // Next 4 cards
+        {market.cards.slice(4, 8).map((card, index) => (  // Next 4 cards
           <div className='market-card-wrapper' key ={index+4}>
             <img
               key={index}
@@ -252,8 +258,8 @@ function Market({ market }) {
             <div className='market-buttons'>
               {card !== 97 && (
                 <>
-                  <button onClick={() => handleButtonPress(0, index)}>Speculate</button>
-                  <button onClick={() => handleButtonPress(1, index)}>Purchase</button>
+                  <button onClick={() => handleButtonPress(0, index+4)}>Speculate</button>
+                  <button onClick={() => handleButtonPress(1, index+4)}>Purchase</button>
                 </>
               )}
             </div>
@@ -267,19 +273,21 @@ function Market({ market }) {
   );
 }
 function Token ( {player} ){
-  const [t, setT] = useState(95);
+  const [t, setT] = useState(`${player.id}-passed`);
   useEffect(() => {
     if (player.token === 0) {
-      setT(96); 
+      setT(`${player.id}-passed`); 
     } else if (player.token === 1) {
-      setT(95); 
+      setT(`${player.id}-ready`); 
     }
   }, [player.token]); 
 
 
   const handleFlipError = (player) => {
+
     if (gameState.phase == 1) return 0
     if (gameState.current_turn == player) return 0
+      
     setPopupText("You cannot flip when it is not your turn")
     return 1
   }
@@ -299,7 +307,7 @@ function Token ( {player} ){
   return (
     <img 
     className='token'
-    src={`assets/cards/${t}.jpg`}
+    src={`assets/player-tokens/${t}.jpg`}
     onClick={() => Flip(player.id)}
     ></img>
   )
@@ -343,6 +351,8 @@ function PlayerBoard({ player }) {
                 className="card"
                 src={`assets/cards/${player.discard[player.discard.length-1]}.jpg`}
                 alt={`Card back}`}
+                onContextMenu={(e) => handleRightClick(e, player.discard[player.discard.length-1])}
+
               />
               )}
               {player.discard.length == 0 && (
