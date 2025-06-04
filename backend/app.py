@@ -81,6 +81,15 @@ def play(player, card_index):
 def state():
     return jsonify(game.get_state())
 
+@app.route("/api/cleanup", methods=['POST'])
+def cleanup():
+    if (game.phase == 3): game.cleanup1()
+    elif (game.phase == 4): game.cleanup2()
+    elif (game.phase == 5): game.cleanup3()
+    elif (game.phase == 6): game.cleanup4()
+    else:  return jsonify({"status": "fail", "message": "Invalid phase"})
+    socketio.emit('game_update', game.get_state()) 
+    return jsonify({"status": "success", "message": "Successfully progressed to next cleanup phase"})
 
 @app.route("/api/<int:player>/flip", methods=['POST'])
 def flip(player):

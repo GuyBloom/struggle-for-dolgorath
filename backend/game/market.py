@@ -47,19 +47,24 @@ class Market:
         
         
     def to_dict(self):
-        displayCards = []
+        displayCards1 = []
+        displayCards2 = []
+
         for c in self.row1:
-            displayCards.append(c.card)
+            displayCards1.append(c.card)
         for c in self.row2:
-            displayCards.append(c.card)
-        specs = []
+            displayCards2.append(c.card)
+        specs1 = []
+        specs2 = []
         for c in self.row1:
-            specs.append(c.specs)
+            specs1.append(c.specs)
         for c in self.row2:
-            specs.append(c.specs)
+            specs2.append(c.specs)
         return {
-            "cards": displayCards,
-            "specs": specs
+            "cards1": displayCards1,
+            "specs1": specs1,
+            "cards2": displayCards2,
+            "specs2": specs2
         }
     
 class MarketCard:

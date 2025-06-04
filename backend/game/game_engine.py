@@ -49,16 +49,26 @@ class Game:
                 self.players[self.team12[0]-1].hp -= dmg
         self.next_turn()
 
-    def cleanup(self):
-        self.phase = 3
+    def cleanup1(self):
         self.current_turn = 0
+
         print(f'Attempting to clean up' )
         for p in self.players:
-            p.cleanup()
-        self.phase = 0
+            p.cleanup1()
+        self.phase = 4
+    def cleanup2(self):
+        for p in self.players:
+            p.cleanup2()
+        self.phase = 5
+    def cleanup3(self):
         self.market.cleanup()
+
         self.current_turn = self.firstPlayer
         print("Successfully cleaned up")
+        self.phase = 6
+    def cleanup4(self):
+        self.phase = 0
+
 
 
     def next_turn(self): #assumes turn isn't 0
@@ -72,7 +82,7 @@ class Game:
         if (self.phase == 2):
             if self.action_over():
                 print("Action phase over, cleaning up")
-                self.cleanup()
+                self.phase = 3
             elif self.players[self.current_turn - 1].token == 0:
                 self.next_turn()
 

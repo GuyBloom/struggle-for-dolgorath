@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client'; 
 
 
+
+
 function App() {
   const [gameState, setGameState] = useState(null);
   const [zoomedCardIndex, setZoomedCardIndex] = useState(null);
@@ -181,10 +183,21 @@ const handleSpeculate = async (card) => {
   
 };
 
-
+const isSpeculating = (player, card) => {
+  if (card < 3){
+    for (let i = 0; i < gameState.market.specs1[card].length; ++i){
+      if (gameState.market.specs1[card][i] == player-1) return 1
+    }
+    return 0
+  }
+    for (let i = 0; i < gameState.market.specs2[card-4].length; ++i){
+      if (gameState.market.specs2[card-4][i] == player-1) return 1
+    }
+    return 0
+}
 const handlePurchase = async (card) => {
   let cost = 3 //will change
-  if (gameState.players[gameState.current_turn - 1].speculate == card) cost -=1 
+  if (isSpeculating(gameState.current_turn-1, card) == 1) cost -=1 
 
   if (gameState.players[gameState.current_turn - 1]["coins"] < cost){
     setPopupText("You do not have enough coins to buy this")
@@ -201,7 +214,35 @@ const handlePurchase = async (card) => {
 };
 
 
+function CleanupNext({ phase }) {
+  const handleCleanup = async () => {
+  const response = await fetch(`http://localhost:5000/api/cleanup`, {
+          method: 'POST'
+    });
 
+    const result = await response.json();
+    console.log(result);
+};
+  const displayCleanup = (phase) => {
+    if (phase  == 3){
+      return "Clear boards and player stats"
+    }
+    else if (phase == 4){
+      return "Draw cards"
+    }
+    else if (phase == 5) {
+      return "Cycle Market"
+    }
+    else{
+      return "Start next round"
+    }
+  };
+  return (
+    phase >= 3 && 
+  (<button onClick={() =>  handleCleanup()}>{displayCleanup(phase)}</button>)
+)
+  
+}
 
 function Market({ market }) {
   return (
@@ -223,8 +264,9 @@ function Market({ market }) {
             
             </div>
       <div className="market-row">
-        {market.cards.slice(0, 4).map((card, index) => ( 
+        {market.cards1.map((card, index) => ( 
           <div className='market-card-wrapper' key={index}>
+            <div className='market-card-container' key={index}>
             <img
               key={index}
               className="card"
@@ -232,6 +274,34 @@ function Market({ market }) {
               alt={`Card ${card}`}
               onContextMenu={(e) => handleRightClick(e, card)} 
             />
+             {/* Token 1 - Top Left */}
+            {market.specs1[index].length > 0 && <img
+              className="token-overlay token-top-left"
+              src={`assets/player-tokens/${market.specs1[index][0] + 1}-spec.png`}
+              alt="Token 1"
+            />}
+
+            {/* Token 2 - Top Right */}
+            {market.specs1[index].length > 1 && <img
+              className="token-overlay token-top-right"
+              src={`assets/player-tokens/${market.specs1[index][1] + 1}-spec.png`}
+              alt="Token 2"
+            />}
+
+            {/* Token 3 - Bottom Left */}
+            {market.specs1[index].length > 2 && <img
+              className="token-overlay token-bottom-left"
+              src={`assets/player-tokens/${market.specs1[index][2] + 1}-spec.png`}
+              alt="Token 3"
+            />}
+
+            {/* Token 4 - Bottom Right */}
+            {market.specs1[index].length > 3 && <img
+              className="token-overlay token-bottom-right"
+              src={`assets/player-tokens/${market.specs1[index][3] + 1}-spec.png`}
+              alt="Token 4"
+            />}
+            </div>
             <div className='market-buttons'>
               {card !== 97 && (
                 <>
@@ -246,8 +316,9 @@ function Market({ market }) {
       </div>
 
       <div className="market-row">
-        {market.cards.slice(4, 8).map((card, index) => (  // Next 4 cards
+        {market.cards2.map((card, index) => (  // Next 4 cards
           <div className='market-card-wrapper' key ={index+4}>
+                        <div className='market-card-container' key={index}>
             <img
               key={index}
               className="card"
@@ -255,6 +326,34 @@ function Market({ market }) {
               alt={`Card ${card}`}
               onContextMenu={(e) => handleRightClick(e, card)} 
             />
+             {/* Token 1 - Top Left */}
+            {market.specs2[index].length > 0 && <img
+              className="token-overlay token-top-left"
+              src={`assets/player-tokens/${market.specs2[index][0] + 1}-spec.png`}
+              alt="Token 1"
+            />}
+
+            {/* Token 2 - Top Right */}
+            {market.specs2[index].length > 1 && <img
+              className="token-overlay token-top-right"
+              src={`assets/player-tokens/${market.specs2[index][1] + 1}-spec.png`}
+              alt="Token 2"
+            />}
+
+            {/* Token 3 - Bottom Left */}
+            {market.specs2[index].length > 2 && <img
+              className="token-overlay token-bottom-left"
+              src={`assets/player-tokens/${market.specs2[index][2] + 1}-spec.png`}
+              alt="Token 3"
+            />}
+
+            {/* Token 4 - Bottom Right */}
+            {market.specs2[index].length > 3 && <img
+              className="token-overlay token-bottom-right"
+              src={`assets/player-tokens/${market.specs2[index][3] + 1}-spec.png`}
+              alt="Token 4"
+            />}
+            </div>
             <div className='market-buttons'>
               {card !== 97 && (
                 <>
@@ -448,6 +547,7 @@ function PlayerBoard({ player }) {
     </div>
     <PlayerBoard key="3" player={gameState.players[3]}/>
     <PlayerBoard key="4" player={gameState.players[2]}/>
+    <CleanupNext key="CleanupButton" phase ={gameState.phase}/>
 
 
 
@@ -523,6 +623,7 @@ function PlayerBoard({ player }) {
 
 
 }
+
 
 
 export default App;

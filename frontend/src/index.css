@@ -42,6 +42,39 @@
       padding: 0;
       background-color: #ccc;
     }
+  .market-card-container {
+  position: relative;   /* Allow absolute positioning of the tokens */
+  display: inline-block; /* Ensure cards are aligned properly */
+  }
+
+.token-overlay {
+  position: absolute;
+  width: 16px;      /* Adjust token size as needed */
+  height: 16px;     /* Adjust token size as needed */
+  object-fit: contain;
+  z-index: 10;      /* Ensure tokens appear above the card */
+  }
+
+.token-top-left {
+  top: 8px;
+  left: 8px;
+  }
+
+.token-top-right {
+  top: 8px;
+  right: 20px;
+  }
+
+.token-bottom-left {
+  bottom: 10px;
+  left: 8px;
+  }
+
+.token-bottom-right {
+  bottom: 10px;
+  right: 20px;
+  }
+
     .talisman-container {
       display: flex;
       flex-direction:row;

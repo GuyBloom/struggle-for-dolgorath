@@ -27,7 +27,7 @@ class Player:
         for _ in range(5): self.hand.append(self.deck.draw())
     
 
-    def cleanup(self):
+    def cleanup1(self):
         print(f"Attempting to clean player {self.id}")
         self.damage = 0
         self.coins = 0
@@ -37,6 +37,7 @@ class Player:
             self.discard.addOnTop(self.played.pop())
         while len(self.hand) > 0:
             self.discard.addOnTop(self.hand.pop())
+    def cleanup2(self):
         for _ in range(5): self.hand.append(self.deck.draw())
 
     def to_dict(self):
