@@ -18,6 +18,7 @@ versus = {
 
 class Game:
     def __init__(self):
+        self.choice = -1
         self.team12 = [1, 2]
         self.team34 = [3, 4]
         self.market_deck = Deck()

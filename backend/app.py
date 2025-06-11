@@ -40,12 +40,12 @@ def speculate_move(index):
     else:
         return jsonify({"status": "error", "message": "Invalid action!"})
     
-@app.route('/api/purchase/<int:index>/<int:cost>', methods=['POST'])
-def purchase_move(index, cost):
+@app.route('/api/purchase/<int:player>/<int:index>/<int:cost>', methods=['POST'])
+def purchase_move(player, index, cost):
     if index >=0:
         card = index
         print(f"Current turn: {game.current_turn}")
-        game.purchase(index, game.current_turn, cost)
+        game.purchase(index, player, cost)
         socketio.emit('game_update', game.get_state()) 
         return jsonify({"status": "success", "message": "Successfully purchased "})
     else:
@@ -80,6 +80,13 @@ def play(player, card_index):
 @app.route("/api/state")
 def state():
     return jsonify(game.get_state())
+
+@app.route("/api/choice/<int:choice>", methods=['POST'])
+def makeChoice(choice):
+    game.choice = choice
+    socketio.emit('game_update', game.get_state()) 
+
+
 
 @app.route("/api/cleanup", methods=['POST'])
 def cleanup():

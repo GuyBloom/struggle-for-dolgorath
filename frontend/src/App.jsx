@@ -1,33 +1,98 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client'; 
 
 
+const useChoice = () => {
+  
+  const [choices, setChoices] = useState([]); // Choices to display
+  const [selectedChoice, setSelectedChoice] = useState(null); // Track the selected choice
+  const [isChoiceMade, setIsChoiceMade] = useState(false)
+  // Function to set the choices and reset the state
+  const setChoiceOptions = (options) => {
+    setChoices(options);
+    setSelectedChoice(null); // Reset choice
+    setIsChoiceMade(false);  // Reset waiting state
+  };
+
+  // Function to handle user selection
+  const handleChoice = (index) => {
+    setSelectedChoice(index); // Set the selected index (1-based index)
+    setIsChoiceMade(true); // Mark the choice as made
+    setChoices([])
+  };
+
+  // Return functions and state for use in your components
+  return { setChoiceOptions, handleChoice, setChoices, isChoiceMade, choices, selectedChoice };
+};
 
 
+
+function ChoiceComp( {choicesSet, onSelectChoice}) {
+ return (
+  choicesSet.length > 0 && ( //choices
+      <div
+
+        style={{
+          position: 'fixed',
+          top: 0, left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)', 
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          cursor: 'zoom-out'
+        }}
+      >
+        {choicesSet.map((choice, index) =>
+            <button key={index} onClick={() => onSelectChoice(index)}>{choice}</button>
+            
+        )}
+      </div>
+    )
+ )
+}
 function App() {
   const [gameState, setGameState] = useState(null);
   const [zoomedCardIndex, setZoomedCardIndex] = useState(null);
   const [popupText, setPopupText] = useState(null);
+  const [choices, setChoices] = useState([]); // Choices to display
+  const [selectedChoice, setSelectedChoice] = useState(null); // Track the selected choice
+  const [isChoiceMade, setIsChoiceMade] = useState(false)
+  const resolvePromiseRef = useRef(null); // Use a ref to store the resolve function
+
+
+
+
+  // const { setChoiceOptions, setChoices, setSelectedChoice, handleChoice, isChoiceMade, choices, getChoice } = useChoice();
+
+
+
 
 
   const socket = io('http://localhost:5000', {
     transports: ['websocket'],  
   });
 
-  const displaySpeculate = (spec) => {
-    if (spec ==-2){
-      return "Not speculated yet"
-    }
-    else if (spec == 8){
-      return "Refused to speculate"
-    }
-    else{
-      return `Position ${spec}`
-    }
+const resolveChoice = (choice) => {
+  setChoices([])
+  setSelectedChoice(choice)
+  resolvePromiseRef.current(choice);
+  console.log(`Choice successfully selected: ${choice}`)
+}
+
+
+  const promptPlayerToBuy = (player) => {
+    setChoices([
+      `Player ${player + 1} buy`,
+      `Player ${player + 1} do not buy`
+    ])
+    return new Promise((resolve) => {
+      resolvePromiseRef.current = resolve; 
+
+    });
   };
-
-
-  
   const displayPhase = (phase) => {
     if (phase ==0){
       return "Speculate"
@@ -182,28 +247,68 @@ const handleSpeculate = async (card) => {
 
   
 };
-
-const isSpeculating = (player, card) => {
-  if (card < 3){
-    for (let i = 0; i < gameState.market.specs1[card].length; ++i){
-      if (gameState.market.specs1[card][i] == player-1) return 1
-    }
-    return 0
+const specsFromIndex = (index) => {
+  if (index < 4){
+    return gameState.market.specs1[index]
   }
-    for (let i = 0; i < gameState.market.specs2[card-4].length; ++i){
-      if (gameState.market.specs2[card-4][i] == player-1) return 1
-    }
-    return 0
+  else{
+    return gameState.market.specs2[index-4]
+  }
 }
+const isSpeculating = (player, card) => {
+  let specs = specsFromIndex(card)
+  for (let i = 0; i < specs.length; ++i){
+    if (specs[i] == player-1) return 1
+  }
+  return 0
+
+  // if (card < 3){
+  //   for (let i = 0; i < gameState.market.specs1[card].length; ++i){
+  //     if (gameState.market.specs1[card][i] == player-1) return 1
+  //   }
+  //   return 0
+  // }
+  //   for (let i = 0; i < gameState.market.specs2[card-4].length; ++i){
+  //     if (gameState.market.specs2[card-4][i] == player-1) return 1
+  //   }
+  //   return 0
+}
+
+
+
+
 const handlePurchase = async (card) => {
   let cost = 3 //will change
-  if (isSpeculating(gameState.current_turn-1, card) == 1) cost -=1 
+  let specs = specsFromIndex(card)
+  let canBuy = true
+  console.log(specs)
+
+
+  for (let i = 0; i < specs.length; i++) {
+    console.log(`Checking player ${specs[i] + 1}`)
+    if (specs[i] + 1 == gameState.current_turn) break;
+    if (gameState.players[specs[i]].coins >= cost -1){
+        console.log(`Prompting player ${specs[i] + 1} to buy`)
+
+      let currChoice = await promptPlayerToBuy(specs[i]);
+      console.log(`handlePurchase recieves: selected choice: ${currChoice}`)
+      if (currChoice === 0) { // see if any player wants to buy
+        console.log(`Player ${specs[i] + 1} decides to buy`);
+        const response = await fetch(`http://localhost:5000/api/purchase/${specs[i]+1}/${card}/${cost}`, {
+          method: 'POST'
+        });
+        canBuy = false
+        break;
+      }
+    }
+  }
+  
 
   if (gameState.players[gameState.current_turn - 1]["coins"] < cost){
     setPopupText("You do not have enough coins to buy this")
   }
-  else{
-    const response = await fetch(`http://localhost:5000/api/purchase/${card}/${cost}`, {
+  else if (canBuy){
+    const response = await fetch(`http://localhost:5000/api/purchase/${gameState.current_turn}/${card}/${cost}`, {
           method: 'POST'
     });
 
@@ -212,6 +317,11 @@ const handlePurchase = async (card) => {
   }
   
 };
+
+
+
+
+
 
 
 function CleanupNext({ phase }) {
@@ -503,7 +613,6 @@ function PlayerBoard({ player }) {
           <div className="stat-item">Might: {player["might"]}</div>
           <div className="stat-item">Insight: {player["insight"]}</div>
           <div className="stat-item">DMG: {player["damage"]}</div>
-          <div className="stat-item">Speculate: {displaySpeculate(player["speculate"])}</div>
 
         </div>
       </div>
@@ -542,9 +651,7 @@ function PlayerBoard({ player }) {
 
     <PlayerBoard key="1" player={gameState.players[0]}/>
     <PlayerBoard key="2" player={gameState.players[1]}/>
-    <div className="market-container" id = "market-container">
-      <Market market={gameState.market} />
-    </div>
+    <Market market={gameState.market} />
     <PlayerBoard key="3" player={gameState.players[3]}/>
     <PlayerBoard key="4" player={gameState.players[2]}/>
     <CleanupNext key="CleanupButton" phase ={gameState.phase}/>
@@ -553,7 +660,8 @@ function PlayerBoard({ player }) {
 
 
   </div>
-  
+
+    
     {popupText !== null && ( //error popup
       <div
         onClick={() => setPopupText(null)} // click anywhere to close zoom
@@ -574,17 +682,16 @@ function PlayerBoard({ player }) {
         <div className='popup-box'> {popupText}</div>'
       </div>
     )}
-
-    {zoomedCardIndex !== null && ( //card zoom
+    {choices.length > 0 && <ChoiceComp choicesSet={choices} onSelectChoice={resolveChoice} />}
+    {zoomedCardIndex !== null && (
       <div
-        onClick={() => setZoomedCardIndex(null)} // click anywhere to close zoom
-
+        onClick={() => setZoomedCardIndex(null)} 
         style={{
           position: 'fixed',
           top: 0, left: 0,
           width: '100vw',
           height: '100vh',
-          backgroundColor: 'rgba(0, 0, 0, 0.8)', // semi-transparent black
+          backgroundColor: 'rgba(0, 0, 0, 0.8)', 
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',

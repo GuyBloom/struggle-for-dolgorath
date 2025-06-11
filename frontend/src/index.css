@@ -186,6 +186,8 @@
 
 
     .stats-list {
+      display: block;
+      white-space: nowrap;
       text-align: left;
       font-size: 14px;
       padding: 5px;
