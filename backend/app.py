@@ -39,7 +39,17 @@ def speculate_move(index):
         return jsonify({"status": "success", "message": "Successfully speculated "})
     else:
         return jsonify({"status": "error", "message": "Invalid action!"})
-    
+
+@app.route('/api/removespec/<int:speculated_card>/<int:speculate_pos>', methods=['POST'])
+def remove_spec(speculated_card, speculate_pos):
+    specs = game.market.indexToCard(speculated_card).specs
+    for i in range(speculate_pos, len(specs)-1):
+        specs[i] = specs[i+1]
+    specs.pop()
+    socketio.emit('game_update', game.get_state()) 
+    return jsonify({"status": "success", "message": "Successfully removed speculate token "})
+
+
 @app.route('/api/purchase/<int:player>/<int:index>/<int:cost>', methods=['POST'])
 def purchase_move(player, index, cost):
     if index >=0:

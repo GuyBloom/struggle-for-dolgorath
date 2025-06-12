@@ -93,6 +93,16 @@ const resolveChoice = (choice) => {
 
     });
   };
+  const promptPlayerToRemoveSpec = (player) => {
+    setChoices([
+      `Player ${player} remove speculate token`,
+      `Player ${player} do not remove speculate token`
+    ])
+    return new Promise((resolve) => {
+      resolvePromiseRef.current = resolve; 
+
+    });
+  };
   const displayPhase = (phase) => {
     if (phase ==0){
       return "Speculate"
@@ -232,8 +242,8 @@ const handleButtonPress = (buttonType, index) => { //0 = speculate, 1 = purchase
 }
 
 const handleSpeculate = async (card) => {
-  let currSpec = gameState.players[gameState.current_turn -1].speculate 
-  if (currSpec != -2 && currSpec != 8){
+  let currSpec = getSpecFromPlayer(gameState.current_turn)
+  if (currSpec[0] != -1){
     setPopupText("You are already speculating")
   }
   else{
@@ -283,31 +293,33 @@ const handlePurchase = async (card) => {
   let canBuy = true
   console.log(specs)
 
+  if (gameState.players[gameState.current_turn - 1]["coins"] < cost){
+    setPopupText("You do not have enough coins to buy this")
+  }
+  else {
+    for (let i = 0; i < specs.length; i++) {
+      console.log(`Checking player ${specs[i] + 1}`)
+      if (specs[i] + 1 == gameState.current_turn) break;
+      if (gameState.players[specs[i]].coins >= cost -1){
+          conxsole.log(`Prompting player ${specs[i] + 1} to buy`)
 
-  for (let i = 0; i < specs.length; i++) {
-    console.log(`Checking player ${specs[i] + 1}`)
-    if (specs[i] + 1 == gameState.current_turn) break;
-    if (gameState.players[specs[i]].coins >= cost -1){
-        console.log(`Prompting player ${specs[i] + 1} to buy`)
-
-      let currChoice = await promptPlayerToBuy(specs[i]);
-      console.log(`handlePurchase recieves: selected choice: ${currChoice}`)
-      if (currChoice === 0) { // see if any player wants to buy
-        console.log(`Player ${specs[i] + 1} decides to buy`);
-        const response = await fetch(`http://localhost:5000/api/purchase/${specs[i]+1}/${card}/${cost}`, {
-          method: 'POST'
-        });
-        canBuy = false
-        break;
+        let currChoice = await promptPlayerToBuy(specs[i]);
+        console.log(`handlePurchase recieves: selected choice: ${currChoice}`)
+        if (currChoice === 0) { // see if any player wants to buy
+          console.log(`Player ${specs[i] + 1} decides to buy`);
+          const response = await fetch(`http://localhost:5000/api/purchase/${specs[i]+1}/${card}/${cost}`, {
+            method: 'POST'
+          });
+          canBuy = false
+          break;
+        }
       }
     }
   }
   
 
-  if (gameState.players[gameState.current_turn - 1]["coins"] < cost){
-    setPopupText("You do not have enough coins to buy this")
-  }
-  else if (canBuy){
+  
+  if (canBuy){
     const response = await fetch(`http://localhost:5000/api/purchase/${gameState.current_turn}/${card}/${cost}`, {
           method: 'POST'
     });
@@ -491,7 +503,16 @@ function Token ( {player} ){
     }
   }, [player.token]); 
 
-
+  const getSpecFromPlayer = (player) => {
+    for (let i = 0; i < 8; ++i){
+      let specs = specsFromIndex(i)
+      for (let j = 0; j < specs.length; ++j){
+        if (specs[j] + 1 == player)
+          return [i, j]
+      }
+    }
+    return [-1, -1]
+  }
   const handleFlipError = (player) => {
 
     if (gameState.phase == 1) return 0
@@ -502,6 +523,21 @@ function Token ( {player} ){
   }
   const Flip = async (player) => {
 
+    let spec = getSpecFromPlayer(player)
+    
+    if (gameState.phase == 2 && spec[0] != -1){
+      console.log(`Player ${player} is speculating on position ${spec}. Asking to remove`)
+      let unspec = await promptPlayerToRemoveSpec(player)
+        if (unspec == 0){
+          console.log(`Specs before remove: ${specsFromIndex(spec[0])}`)
+
+          await fetch(`http://localhost:5000/api/removespec/${spec[0]}/${spec[1]}`, {
+            method: 'POST'});
+          console.log(`Specs after remove: ${specsFromIndex(spec[0])}`)
+
+        }
+      
+    }
     if (handleButtonError(3) == 0 && handleFlipError(player) == 0){
       await fetch(`http://localhost:5000/api/${player}/flip`, {
             method: 'POST'
@@ -509,6 +545,7 @@ function Token ( {player} ){
       });
       for (let i = 0; i < 4; ++i){
         console.log(`Player ${i+1}: ${gameState.players[i].token}`)
+        
       }
     }
   };
