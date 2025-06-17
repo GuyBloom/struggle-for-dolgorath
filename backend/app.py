@@ -26,9 +26,13 @@ def speculate_move(index):
     if index >= 0:
         card = index
         print(f"Current turn: {game.current_turn}")
-        game.players[game.current_turn-1].speculate = card #will be removed; speculations will be stored in the market class, not the player class
+        game.players[game.current_turn-1].hasSpec = 1 
+        for p in range(4):
+            print(f"Player {p+1} hasSpec: {game.players[p].hasSpec}")
+
         game.market.speculate(game.current_turn-1, index)
-        game.next_turn()
+        while (game.players[game.current_turn-1].hasSpec == 1 and not game.speculate_over()):
+            game.next_turn()
         if (game.phase == 0 and game.speculate_over()):
             game.phase = 1
             game.current_turn = 0
@@ -43,6 +47,7 @@ def speculate_move(index):
 @app.route('/api/removespec/<int:speculated_card>/<int:speculate_pos>', methods=['POST'])
 def remove_spec(speculated_card, speculate_pos):
     specs = game.market.indexToCard(speculated_card).specs
+    game.players[specs[speculate_pos]].hasSpec = 0
     for i in range(speculate_pos, len(specs)-1):
         specs[i] = specs[i+1]
     specs.pop()

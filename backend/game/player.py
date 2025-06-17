@@ -24,6 +24,7 @@ class Player:
         self.talismans = [63, 64, 65, 66]
         self.tapped = [0, 0, 0, 0] #0 indicates untapped, 1 indicates tapped
         self.speculate = -2 #0-7 indicates market placement, -1 indicates refused, -2 indicates not speculated yet
+        self.hasSpec = 0 #0 means not given option to speculate, 1 means given option to speculate
         for _ in range(5): self.hand.append(self.deck.draw())
     
 
@@ -43,8 +44,9 @@ class Player:
     def to_dict(self):
         return {
             "tapped": self.tapped,
-            "token": self.token,
+            "token": self.token, #0 is passed, 1 is ready
             "speculate": self.speculate,
+            "hasSpec": self.hasSpec,
             "board": self.board,
             "might": self.might,
             "insight": self.insight,

@@ -240,18 +240,44 @@ const handleButtonPress = (buttonType, index) => { //0 = speculate, 1 = purchase
   }
   
 }
-
+const vsFromPlayer = (player) =>{
+  if (player == 1 || player == 2){
+    return [3, 4]
+  }
+  else{
+    return [1, 2]
+  }
+}
+const blockedSpec = (playerSpeculating) =>{
+  let ps = gameState.players[playerSpeculating-1]
+  let otherTeam = vsFromPlayer(playerSpeculating)
+  for (let i = 0; i < otherTeam.length; ++i){
+    let player = gameState.players[otherTeam[i]-1]
+    if (player.insight >= ps.insight && player.token == 0){
+      return true
+    }
+  }
+  return false
+  
+}
 const handleSpeculate = async (card) => {
   let currSpec = getSpecFromPlayer(gameState.current_turn)
   if (currSpec[0] != -1){
     setPopupText("You are already speculating")
   }
+  else if (gameState.phase == 2 && blockedSpec(gameState.current_turn)){
+    setPopupText("A player with equal or higher insight has already flipped")
+  }
   else{
+      
       const response = await fetch(`http://localhost:5000/api/speculate/${card}`, {
       method: 'POST',  
   });
   const result = await response.json();
   console.log(result);
+  for (let i = 0; i < 4; ++i){
+        console.log(`Player ${i + 1} hasSpec: ${gameState.players[i].hasSpec}`)
+      }
   }
   
 
@@ -493,6 +519,16 @@ function Market({ market }) {
     </div>
   );
 }
+const getSpecFromPlayer = (player) => {
+    for (let i = 0; i < 8; ++i){
+      let specs = specsFromIndex(i)
+      for (let j = 0; j < specs.length; ++j){
+        if (specs[j] + 1 == player)
+          return [i, j]
+      }
+    }
+    return [-1, -1]
+  }
 function Token ( {player} ){
   const [t, setT] = useState(`${player.id}-passed`);
   useEffect(() => {
@@ -503,16 +539,7 @@ function Token ( {player} ){
     }
   }, [player.token]); 
 
-  const getSpecFromPlayer = (player) => {
-    for (let i = 0; i < 8; ++i){
-      let specs = specsFromIndex(i)
-      for (let j = 0; j < specs.length; ++j){
-        if (specs[j] + 1 == player)
-          return [i, j]
-      }
-    }
-    return [-1, -1]
-  }
+  
   const handleFlipError = (player) => {
 
     if (gameState.phase == 1) return 0
@@ -525,7 +552,9 @@ function Token ( {player} ){
 
     let spec = getSpecFromPlayer(player)
     
-    if (gameState.phase == 2 && spec[0] != -1){
+    
+    if (handleButtonError(3) == 0 && handleFlipError(player) == 0){
+      if (gameState.phase == 2 && spec[0] != -1){
       console.log(`Player ${player} is speculating on position ${spec}. Asking to remove`)
       let unspec = await promptPlayerToRemoveSpec(player)
         if (unspec == 0){
@@ -538,7 +567,9 @@ function Token ( {player} ){
         }
       
     }
-    if (handleButtonError(3) == 0 && handleFlipError(player) == 0){
+
+
+
       await fetch(`http://localhost:5000/api/${player}/flip`, {
             method: 'POST'
 

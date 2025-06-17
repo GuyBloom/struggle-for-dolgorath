@@ -1,6 +1,8 @@
 from .deck import Deck
 from .player import Player
 from .market import Market
+from .market import MarketCard
+
 #turn order: 1 ->2 -> 3 -> 4 -> 1
 costs = {3} #placeholder; will be dictionary from card indices to card costs
 plusOneCoin = {67, 69, 70, 71, 72, 73}
@@ -65,13 +67,33 @@ class Game:
         self.market.cleanup()
 
         self.current_turn = self.firstPlayer
+        count = 0
+        while (self.isSpeculating(self.current_turn) and count < 3): 
+            self.next_turn()
+            count+= 1
         print("Successfully cleaned up")
+        for p in range(4):
+            if (not self.isSpeculating(p+1)):
+                self.players[p].hasSpec = 0
         self.phase = 6
     def cleanup4(self):
         self.phase = 0
+        if (self.speculate_over()):
+            self.phase = 1
+            self.current_turn = 0
 
-
-
+    def isSpeculating(self, player):
+        for c in range(8):
+            card = self.market.indexToCard(c)
+            for s in range(len(card.specs)):
+                if card.specs[s] == player-1: return True
+        return False
+    def allSpeculating(self):
+        for p in range(4):
+            if (not self.isSpeculating(p)):
+                return False
+        return True
+    
     def next_turn(self): #assumes turn isn't 0
         if (self.current_turn == 4):
             self.current_turn = 1
@@ -91,7 +113,7 @@ class Game:
         
     def speculate_over(self):
         for p in self.players:
-            if (p.speculate == -2):
+            if (p.hasSpec == 0):
                 return False
         return True
     def play_over(self):
