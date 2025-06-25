@@ -115,6 +115,13 @@ function PlayerBoard({ player, Pfunctions, Tfunctions, gameState }) {
         ))}
       </div>
       <Token key={player.id} player={player} functions={Tfunctions} gameState={gameState}></Token>
+      {gameState.firstPlayer == player.id &&
+
+      <img 
+      className='token'
+      src={`assets/first-tokens/${gameState.firstTokenFace}.png`}
+    ></img>
+      }
       <button onClick={() => handleDamage(player.id)}>Damage</button>
 
       <button></button>

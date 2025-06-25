@@ -20,6 +20,7 @@ versus = {
 
 class Game:
     def __init__(self):
+        self.firstTokenFace = "available" #available means token is on player who HAS first turn, taken means token is on player who will be NEXT first turn
         self.choice = -1
         self.team12 = [1, 2]
         self.team34 = [3, 4]
@@ -78,6 +79,7 @@ class Game:
         self.phase = 6
     def cleanup4(self):
         self.phase = 0
+        self.firstTokenFace = "available"
         if (self.speculate_over()):
             self.phase = 1
             self.current_turn = 0
@@ -179,11 +181,12 @@ class Game:
 
     def firstPass(self):
         for p in self.players:
-            if p.token == 0: return False
+            if p.token == 0 and p.id != self.firstPlayer: return False
         return True
     def flip(self, player):
         if (self.phase == 2 and self.firstPlayer != player and self.firstPass()):
             self.firstPlayer = player
+            self.firstTokenFace = "taken"
         if (self.players[player-1].token == 0):
             self.players[player-1].token = 1
     
@@ -236,10 +239,11 @@ class Game:
         return {
             "phase": self.phase,
             "current_turn": self.current_turn,
-            "first_player": self.firstPlayer,
+            "firstPlayer": self.firstPlayer,
             "market_deck": self.market_deck.cards,
             "market": self.market.to_dict(),
-            "players": [player.to_dict() for player in self.players]
+            "players": [player.to_dict() for player in self.players],
+            "firstTokenFace": self.firstTokenFace
         }
     
 
