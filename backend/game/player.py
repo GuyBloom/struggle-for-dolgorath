@@ -60,6 +60,6 @@ class Player:
             "hand": self.hand,
             "played": self.played,
             "discard": self.discard.cards,
-            "talismans": self.talismans
+            "talismans": self.talismans,
         }
 

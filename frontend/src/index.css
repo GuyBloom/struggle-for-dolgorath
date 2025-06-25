@@ -184,7 +184,13 @@
       border: 2px solid #ccc;
     }
 
-
+  .player-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-bottom: 20px;
+}
     .stats-list {
       display: block;
       white-space: nowrap;
