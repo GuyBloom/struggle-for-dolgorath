@@ -2,6 +2,7 @@ from .deck import Deck
 from .player import Player
 from .market import Market
 from .market import MarketCard
+from .prompt import Prompt
 
 #turn order: 1 ->2 -> 3 -> 4 -> 1
 costs = {3} #placeholder; will be dictionary from card indices to card costs
@@ -18,6 +19,8 @@ versus = {
     4: 1
 }
 
+
+
 class Game:
     def __init__(self):
         self.firstTokenFace = "available" #available means token is on player who HAS first turn, taken means token is on player who will be NEXT first turn
@@ -32,6 +35,7 @@ class Game:
         self.players = [Player(1), Player(2), Player(3), Player(4)] # 1 & 2 vs 3 & 4; 1 vs 3, 2 vs 4
         self.current_turn = 1 #0 is play phase, 1-4 correspond to player turns for morning and action
         self.phase = 0 #0 = morning, 1 = play, 2 = action, 3 = cleanup
+        self.promptQueue = []
         for p in self.players: print(f"Player {p.id}: Token: {p.token}")
 
 
@@ -112,7 +116,6 @@ class Game:
                 self.next_turn()
 
             
-        
     def speculate_over(self):
         for p in self.players:
             if (p.hasSpec == 0):
@@ -164,6 +167,37 @@ class Game:
         
             
             
+    def addMight(self, player, amt):
+        p = self.players[player-1]
+        orig = p.might
+        p.might += amt
+        new = p.might
+        if (orig < 10 and new >= 10):
+            self.promptQueue.append(Prompt(101, player))
+        if (orig < 20 and new >= 20):
+            self.promptQueue.append(Prompt(102, player))
+        if (orig < 30 and new >= 30):
+            self.promptQueue.append(Prompt(103, player))
+        if (orig < 40 and new >= 40):
+            self.promptQueue.append(Prompt(104, player))
+        if (orig < 40 and new >= 40):
+            self.promptQueue.append(Prompt(105, player))
+    def addInsight(self, player, amt):
+        player = self.players[player-1]
+        orig = player.insight
+        player.insight += amt
+        new = player.insight
+        if (orig < 10 and new >= 10):
+            self.promptQueue.append(Prompt(201, player))
+        if (orig < 20 and new >= 20):
+            self.promptQueue.append(Prompt(202, player))
+        if (orig < 30 and new >= 30):
+            self.promptQueue.append(Prompt(203, player))
+        if (orig < 40 and new >= 40):
+            self.promptQueue.append(Prompt(204, player))
+        if (orig < 40 and new >= 40):
+            self.promptQueue.append(Prompt(205, player))
+
         
 
     
@@ -243,7 +277,8 @@ class Game:
             "market_deck": self.market_deck.cards,
             "market": self.market.to_dict(),
             "players": [player.to_dict() for player in self.players],
-            "firstTokenFace": self.firstTokenFace
+            "firstTokenFace": self.firstTokenFace,
+            "promptQueue": [prompt.to_dict() for prompt in self.promptQueue]
         }
     
 

@@ -9,8 +9,14 @@ import time
 
 
 app = Flask(__name__)
+
+
+
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})  
-socketio = SocketIO(app, cors_allowed_origins="http://localhost:5173")  
+socketio = SocketIO(app, cors_allowed_origins="http://localhost:5173")
+
+
+
 game = Game()
 
 
@@ -96,12 +102,22 @@ def play(player, card_index):
 def state():
     return jsonify(game.get_state())
 
+@app.route("/might-<int:player>-<int:amount>")
+def might(player, amount):
+    game.addMight(player, amount)
+    socketio.emit('game_update', game.get_state()) 
+    return jsonify({"status": "success", "message": "Added might"})
+
+
 @app.route("/api/choice/<int:choice>", methods=['POST'])
 def makeChoice(choice):
     game.choice = choice
     socketio.emit('game_update', game.get_state()) 
 
-
+@app.route("/api/poppromptqueue", methods=['POST'])
+def pop():
+    game.promptQueue.pop()
+    return jsonify({"status": "success", "message": "Successfully cleared backend prompts"})
 
 @app.route("/api/cleanup", methods=['POST'])
 def cleanup():
@@ -128,4 +144,5 @@ def flip(player):
 
 
 if __name__ == '__main__':
+    app.debug = True
     socketio.run(app, debug=True)

@@ -1,5 +1,5 @@
 import React from 'react';
-function ChoiceComp( {choicesSet, onSelectChoice}) {
+function ChoiceComp( {choicesSet, onSelectChoice, isText, handleRightClick}) {
  return (
   choicesSet.length > 0 && ( //choices
       <div
@@ -17,9 +17,21 @@ function ChoiceComp( {choicesSet, onSelectChoice}) {
           cursor: 'zoom-out'
         }}
       >
-        {choicesSet.map((choice, index) =>
+        {isText && choicesSet.map((choice, index) =>
             <button key={index} onClick={() => onSelectChoice(index)}>{choice}</button>
             
+        )}
+        {!isText && choicesSet.map((choice, index) =>
+            <img className="card-choice" 
+            src={`assets/cards/${choice}.jpg`}
+            key={index} 
+            onClick={() => onSelectChoice(index)}
+            onContextMenu={(e) => handleRightClick(e, card)}
+
+            >
+            
+            </img>
+
         )}
       </div>
     )

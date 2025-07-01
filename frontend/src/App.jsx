@@ -64,6 +64,8 @@ function App() {
   const [zoomedCardIndex, setZoomedCardIndex] = useState(null);
   const [popupText, setPopupText] = useState(null);
   const [choices, setChoices] = useState([]); // Choices to display
+  const [promptQueue, setPromptQueue] = useState([]);
+  const [isText, setIsText] = useState(null)
   // const [selectedChoice, setSelectedChoice] = useState(null); // Track the selected choice
   // const [isChoiceMade, setIsChoiceMade] = useState(false)
   const resolvePromiseRef = useRef(null); // Use a ref to store the resolve function
@@ -88,12 +90,26 @@ const resolveChoice = (choice) => {
   console.log(`Choice successfully selected: ${choice}`)
 }
 
+  const promptPlayerToChooseTrinket = (player) => {
 
+  }
+  const promptPlayerToChooseAmulet = (player) => {
+    
+  }
+  const promptPlayerToChooseCloak = (player) => {
+    setChoices([57, 58, 59, 60, 61])
+    setIsText(false)
+    return new Promise((resolve) => {
+      resolvePromiseRef.current = resolve; 
+
+    });
+  }
   const promptPlayerToBuy = (player) => {
     setChoices([
       `Player ${player + 1} buy`,
       `Player ${player + 1} do not buy`
     ])
+    setIsText(true)
     return new Promise((resolve) => {
       resolvePromiseRef.current = resolve; 
 
@@ -104,6 +120,7 @@ const resolveChoice = (choice) => {
       `Player ${player} remove speculate token`,
       `Player ${player} do not remove speculate token`
     ])
+    setIsText(true)
     return new Promise((resolve) => {
       resolvePromiseRef.current = resolve; 
 
@@ -155,6 +172,9 @@ const resolveChoice = (choice) => {
       const response = await fetch(`http://localhost:5000/api/damage/${player}`, {
           method: 'POST'
       });
+      if (isGameOver()){
+        setPopupText("Game is over")
+      }
       const result = await response.json();
       console.log(result);
     }
@@ -194,15 +214,44 @@ const resolveChoice = (choice) => {
   });
     socket.on('game_update', (newGameState) => {
       setGameState(newGameState);  // Update the game state on the frontend
+      // setPromptQueue(newGameState.promptQueue)
+      // console.log(`Prompt queue set. Queue: ${promptQueue}`)
+      // fetch(`http://localhost:5000/api/clearpromptqueue`, {method: `POST`})
+      // handlePromptQueue()
+
     });
+  
 
     return () => {
       socket.off('game_update');  // Clean up on unmount
     };
   }, []);
 
-  
 
+  useEffect(() => {
+    if (!gameState) return; 
+
+    const iteratePrompt = async () =>{
+      let size = gameState.promptQueue.length
+      if (size > 0){
+        let prompt = gameState.promptQueue[size-1]
+        let result = await resolvePrompt(prompt)
+        fetch(`http://localhost:5000/api/poppromptqueue`, {method: `POST`})
+      }
+
+    }
+    iteratePrompt()
+  }, [gameState])
+
+const handlePromptQueue = () =>{
+  console.log (`Prompt Queue length: ${promptQueue.length}`)
+  console.log("Attempting to handle prompt queue")
+  while (promptQueue.length > 0){
+      let prompt = popPromptQueue()
+      console.log(`Handling prompt: ${prompt}`)
+      resolvePrompt(prompt)
+    }
+}
 
 const gameContainer = document.getElementById('game-container');
 
@@ -245,6 +294,10 @@ const handleButtonPress = (buttonType, index) => { //0 = speculate, 1 = purchase
     }
   }
   
+}
+
+const isGameOver = () =>{
+  return (gameState.players[0].hp <= 0 && gameState.players[1].hp <=0) || (gameState.players[2].hp <= 0 && gameState.players[3].hp <=0)
 }
 const vsFromPlayer = (player) =>{
   if (player == 1 || player == 2){
@@ -745,6 +798,29 @@ const MarketFunctions = {
   handleRightClick,
   handleButtonPress
 }
+// const popPromptQueue = () =>{
+//   let temp = promptQueue.slice(0, -1)
+//   let prompt = promptQueue[promptQueue.length-1]
+//   setPromptQueue(temp)
+//   return prompt
+// }
+
+const resolvePrompt = async (prompt) =>{
+  console.log(`Attempting to resolve prompt`)
+  console.log(`Prompt code: ${prompt.code}`)
+  console.log(`Prompt player: ${prompt.player}`)
+  if (prompt.code > 100 && prompt.code < 200){
+    if (prompt.code == 101 || prompt.code == 102){
+      let choice = await promptPlayerToChooseCloak(prompt.player)
+      handleCloak(prompt.player, choice)
+    }
+  }
+}
+
+const handleCloak = (player, choice) =>{
+
+}
+
  return (
   <>
   <div className='state-header'>
@@ -793,7 +869,7 @@ const MarketFunctions = {
         <div className='popup-box'> {popupText}</div>'
       </div>
     )}
-    {choices.length > 0 && <ChoiceComp choicesSet={choices} onSelectChoice={resolveChoice} />}
+    {choices.length > 0 && <ChoiceComp choicesSet={choices} onSelectChoice={resolveChoice} isText={isText} handleRightClick={handleRightClick} />}
     {zoomedCardIndex !== null && (
       <div
         onClick={() => setZoomedCardIndex(null)} 

@@ -121,6 +121,18 @@
       font-size: 16px;
       background-color: #f4f4f4;
     }
+    .card-choice {
+       width: 150px;  /* Size of each card */
+      height: 225px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      background-color: #f4f4f4;
+    }
     .hand-container {
       display: flex;
       margin-top: 10px;
