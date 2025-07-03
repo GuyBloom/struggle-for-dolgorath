@@ -109,6 +109,13 @@ def might(player, amount):
     return jsonify({"status": "success", "message": "Added might"})
 
 
+@app.route("/api/cloak/<int:player>/<int:cloak>", methods=['POST'])
+def cloak(player, cloak):
+    game.addTrinket(player, cloak)
+    socketio.emit('game_update', game.get_state()) 
+    return jsonify({"status": "success", "message": "Added cloak"})
+
+
 @app.route("/api/choice/<int:choice>", methods=['POST'])
 def makeChoice(choice):
     game.choice = choice
@@ -116,7 +123,9 @@ def makeChoice(choice):
 
 @app.route("/api/poppromptqueue", methods=['POST'])
 def pop():
+    print(f"Popping prompt queue. Current prompt queue length: {len(game.promptQueue)}")
     game.promptQueue.pop()
+    socketio.emit('game_update', game.get_state()) 
     return jsonify({"status": "success", "message": "Successfully cleared backend prompts"})
 
 @app.route("/api/cleanup", methods=['POST'])

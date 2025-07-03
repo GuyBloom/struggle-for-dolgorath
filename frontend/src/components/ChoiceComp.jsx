@@ -26,8 +26,7 @@ function ChoiceComp( {choicesSet, onSelectChoice, isText, handleRightClick}) {
             src={`assets/cards/${choice}.jpg`}
             key={index} 
             onClick={() => onSelectChoice(index)}
-            onContextMenu={(e) => handleRightClick(e, card)}
-
+            onContextMenu={(e) => handleRightClick(e, choice)}
             >
             
             </img>

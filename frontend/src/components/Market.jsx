@@ -3,9 +3,9 @@ function Market({ market, functions, gameState }) {
   const {handleRightClick, handleButtonPress} = functions
   return (
     <div className="market-container" id="market">
-      <div className='deck-container'>
+      {/* <div className='deck-container'>
 
-      </div>
+      </div> */}
       <div className='deck-container'>
               <div className='deck-header'>
                 {gameState.market_deck.length}

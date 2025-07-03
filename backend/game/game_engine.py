@@ -165,7 +165,8 @@ class Game:
             self.next_turn()
         
         
-            
+    def addTrinket(self, player, trinket):
+        self.players[player-1].trinkets.append(trinket)
             
     def addMight(self, player, amt):
         p = self.players[player-1]

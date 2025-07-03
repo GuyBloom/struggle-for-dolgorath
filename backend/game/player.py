@@ -16,6 +16,7 @@ class Player:
         self.insight = 0
         self.forest = 0
         self.hand = []
+        self.trinkets = []
         self.discard = Deck()
         self.deck = Deck(self.discard)
         self.deck.player_init()
@@ -43,6 +44,7 @@ class Player:
 
     def to_dict(self):
         return {
+            "trinkets": self.trinkets,
             "tapped": self.tapped,
             "token": self.token, #0 is passed, 1 is ready
             "speculate": self.speculate,

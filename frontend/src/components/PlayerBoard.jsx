@@ -1,6 +1,7 @@
 import React from 'react';
 import Token from './Token';
-function PlayerBoard({ player, Pfunctions, Tfunctions, gameState }) {
+import MightTrack from './MightTrack';
+function PlayerBoard({ player, Pfunctions, Tfunctions, gameState, MightFunctions, InsightFunctions }) {
     const { handleRightClick, handlePlayCard, handleDamage, handleTap } = Pfunctions;
     const {setPopupText, handleButtonError, promptPlayerToRemoveSpec, specsFromIndex} = Tfunctions
 
@@ -10,6 +11,7 @@ function PlayerBoard({ player, Pfunctions, Tfunctions, gameState }) {
       <div className="player-board-wrapper">
         
         <div className="player-board">
+          <MightTrack player={player} mightFunctions={MightFunctions}></MightTrack>
           <div className='talisman-container'>
               {player.talismans.map((card, index) => (
                 

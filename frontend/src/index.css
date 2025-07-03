@@ -46,7 +46,34 @@
   position: relative;   /* Allow absolute positioning of the tokens */
   display: inline-block; /* Ensure cards are aligned properly */
   }
+.track-container {
+  position: relative;   /* Allow absolute positioning of the tokens */
+  display: inline-block; /* Ensure cards are aligned properly */
+  }
 
+  .track-overlay {
+     position: absolute;
+      width: 16px;      /* Adjust token size as needed */
+      height: 16px;     /* Adjust token size as needed */
+      object-fit: contain;
+      z-index: 10;      /* Ensure tokens appear above the card */
+  }
+  .track-10 {
+    top: 60px;
+    left: 75px;
+  }
+  .track-20 {
+    top: 108px;
+    left: 75px;
+  }
+  .track-30 {
+    top: 150px;
+    left: 75px;
+  }
+  .track-40 {
+    top: 200px;
+    left: 75px;
+  }
 .token-overlay {
   position: absolute;
   width: 16px;      /* Adjust token size as needed */
@@ -102,13 +129,20 @@
       display: flex;
       justify-content: center;
     }
+    .trinkets-row {
+      display:flex;
+      justify-content: center;
+    }
     .market-col {
       flex: 50%
     }
     .upside-down {
       transform: rotate(180deg);  
     }
-
+    .track {
+      width: 84px;
+      height: 252px;
+    }
     .card {
       width: 50px;  /* Size of each card */
       height: 75px;
