@@ -108,10 +108,16 @@ def might(player, amount):
     socketio.emit('game_update', game.get_state()) 
     return jsonify({"status": "success", "message": "Added might"})
 
+@app.route("/insight-<int:player>-<int:amount>")
+def insight(player, amount):
+    game.addInsight(player, amount)
+    socketio.emit('game_update', game.get_state()) 
+    return jsonify({"status": "success", "message": "Added insight"})
 
-@app.route("/api/cloak/<int:player>/<int:cloak>", methods=['POST'])
-def cloak(player, cloak):
-    game.addTrinket(player, cloak)
+
+@app.route("/api/item/<int:player>/<int:item>", methods=['POST'])
+def item(player, item):
+    game.addItem(player, item)
     socketio.emit('game_update', game.get_state()) 
     return jsonify({"status": "success", "message": "Added cloak"})
 

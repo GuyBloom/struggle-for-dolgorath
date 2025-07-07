@@ -89,10 +89,20 @@ const resolveChoice = (choice) => {
 }
 
   const promptPlayerToChooseTrinket = (player) => {
+    setChoices(gameState.trinkets)
+    setIsText(false)
+    return new Promise((resolve) => {
+      resolvePromiseRef.current = resolve; 
 
+    });
   }
   const promptPlayerToChooseAmulet = (player) => {
-    
+    setChoices([46, 47, 48, 49, 50])
+    setIsText(false)
+    return new Promise((resolve) => {
+      resolvePromiseRef.current = resolve; 
+
+    });
   }
   const promptPlayerToChooseCloak = (player) => {
     setChoices([57, 58, 59, 60, 61])
@@ -460,18 +470,51 @@ const resolvePrompt = async (prompt) =>{
   console.log(`Attempting to resolve prompt`)
   console.log(`Prompt code: ${prompt.code}`)
   console.log(`Prompt player: ${prompt.player}`)
-  if (prompt.code > 100 && prompt.code < 200){
-    if (prompt.code == 101 || prompt.code == 102){
+  if (prompt.code > 100 && prompt.code < 200){ //might
+    if (prompt.code == 101){
       let choice = await promptPlayerToChooseCloak(prompt.player)
       handleCloak(prompt.player, choice)
     }
   }
+  if (prompt.code > 200 && prompt.code < 300){ //insight
+    if (prompt.code == 201 || prompt.code == 202){
+      let choice = await promptPlayerToChooseTrinket(prompt.player)
+      handleTrinket(prompt.player, choice)
+    }
+    else if (prompt.code == 203){
+      let choice = await promptPlayerToChooseAmulet(prompt.player)
+      handleAmulet(prompt.player, choice)
+    }
+
+  }
+}
+
+
+const handleAmulet = async (player, choice) =>{
+  let amulet = 46 + choice
+
+  const response = await fetch(`http://localhost:5000/api/item/${player}/${amulet}`, {
+            method: 'POST'
+
+      });
+  console.log(response)
 }
 
 const handleCloak = async (player, choice) =>{
   let cloak = 57 + choice
 
-  const response = await fetch(`http://localhost:5000/api/cloak/${player}/${cloak}`, {
+  const response = await fetch(`http://localhost:5000/api/item/${player}/${cloak}`, {
+            method: 'POST'
+
+      });
+  console.log(response)
+  
+}
+
+const handleTrinket = async (player, choice) =>{
+  let trinket = gameState.trinkets[choice]
+
+  const response = await fetch(`http://localhost:5000/api/item/${player}/${trinket}`, {
             method: 'POST'
 
       });

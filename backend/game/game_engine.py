@@ -3,6 +3,7 @@ from .player import Player
 from .market import Market
 from .market import MarketCard
 from .prompt import Prompt
+import random
 
 #turn order: 1 ->2 -> 3 -> 4 -> 1
 costs = {3} #placeholder; will be dictionary from card indices to card costs
@@ -36,6 +37,8 @@ class Game:
         self.current_turn = 1 #0 is play phase, 1-4 correspond to player turns for morning and action
         self.phase = 0 #0 = morning, 1 = play, 2 = action, 3 = cleanup
         self.promptQueue = []
+        trinkets = [82, 83, 84, 85, 86, 87, 88, 89, 90, 91]
+        self.trinkets = random.sample(trinkets, 5)
         for p in self.players: print(f"Player {p.id}: Token: {p.token}")
 
 
@@ -165,8 +168,8 @@ class Game:
             self.next_turn()
         
         
-    def addTrinket(self, player, trinket):
-        self.players[player-1].trinkets.append(trinket)
+    def addItem(self, player, item):
+        self.players[player-1].trinkets.append(item)
             
     def addMight(self, player, amt):
         p = self.players[player-1]
@@ -184,10 +187,10 @@ class Game:
         if (orig < 40 and new >= 40):
             self.promptQueue.append(Prompt(105, player))
     def addInsight(self, player, amt):
-        player = self.players[player-1]
-        orig = player.insight
-        player.insight += amt
-        new = player.insight
+        p = self.players[player-1]
+        orig = p.insight
+        p.insight += amt
+        new = p.insight
         if (orig < 10 and new >= 10):
             self.promptQueue.append(Prompt(201, player))
         if (orig < 20 and new >= 20):
@@ -272,6 +275,7 @@ class Game:
     def get_state(self):
         """Get the current game state (whose turn, hands)."""
         return {
+            "trinkets": self.trinkets,
             "phase": self.phase,
             "current_turn": self.current_turn,
             "firstPlayer": self.firstPlayer,
