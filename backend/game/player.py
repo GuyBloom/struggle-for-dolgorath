@@ -41,7 +41,10 @@ class Player:
             self.discard.addOnTop(self.hand.pop())
     def cleanup2(self):
         for _ in range(5): self.hand.append(self.deck.draw())
-
+    
+    def draw(self):
+        self.hand.append(self.deck.draw())
+    
     def to_dict(self):
         return {
             "trinkets": self.trinkets,

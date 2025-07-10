@@ -1,3 +1,4 @@
+from collections import deque
 from .deck import Deck
 from .player import Player
 from .market import Market
@@ -36,7 +37,7 @@ class Game:
         self.players = [Player(1), Player(2), Player(3), Player(4)] # 1 & 2 vs 3 & 4; 1 vs 3, 2 vs 4
         self.current_turn = 1 #0 is play phase, 1-4 correspond to player turns for morning and action
         self.phase = 0 #0 = morning, 1 = play, 2 = action, 3 = cleanup
-        self.promptQueue = []
+        self.promptQueue = deque()
         trinkets = [82, 83, 84, 85, 86, 87, 88, 89, 90, 91]
         self.trinkets = random.sample(trinkets, 5)
         for p in self.players: print(f"Player {p.id}: Token: {p.token}")
@@ -203,7 +204,6 @@ class Game:
             self.promptQueue.append(Prompt(205, player))
 
         
-
     
     def play_card(self, card, player):
         if (card in plusOneCoin):

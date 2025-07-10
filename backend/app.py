@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from game.game_engine import Game
+from game.prompt import Prompt
 from flask_socketio import SocketIO, emit
 
 import time
@@ -87,6 +88,18 @@ def tap_move(index, player):
         return jsonify({"status": "success", "message": "Successfully tapped"})
     else:
         return jsonify({"status": "error", "message": "Invalid action!"})
+    
+@app.route('/api/player/<int:player>/addtodiscard/<int:card>', methods=['POST'])
+def addToDiscard(player, card):
+    game.players[player-1].discard.addOnTop(card)
+    socketio.emit('game_update', game.get_state()) 
+
+
+@app.route('/api/player/<int:player>/draw', methods=['POST'])
+def addToDiscard(player, card):
+    game.players[player-1].draw()
+    socketio.emit('game_update', game.get_state()) 
+
 
 
 @app.route("/api/play/<int:player>/<int:card_index>", methods=['POST'])
@@ -127,12 +140,14 @@ def makeChoice(choice):
     game.choice = choice
     socketio.emit('game_update', game.get_state()) 
 
-@app.route("/api/poppromptqueue", methods=['POST'])
+@app.route("/api/promptqueue/pop", methods=['POST'])
 def pop():
     print(f"Popping prompt queue. Current prompt queue length: {len(game.promptQueue)}")
-    game.promptQueue.pop()
-    socketio.emit('game_update', game.get_state()) 
-    return jsonify({"status": "success", "message": "Successfully cleared backend prompts"})
+    return game.promptQueue.popleft().to_dict()
+@app.route("/api/promptqueue/length", methods=['GET'])
+def length():
+    return jsonify({"length": len(game.promptQueue)})
+
 
 @app.route("/api/cleanup", methods=['POST'])
 def cleanup():

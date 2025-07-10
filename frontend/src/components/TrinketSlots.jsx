@@ -122,7 +122,7 @@ function TrinketSlots({team, gameState, handleRightClick}){ //team 1 = top, purp
               onContextMenu={(e) => handleRightClick(e, playerB.trinkets[2])} 
             />
            )}
-           { playerA.trinkets.length <= 2 && (
+           { playerB.trinkets.length <= 2 && (
              <img
                              key="12"
 

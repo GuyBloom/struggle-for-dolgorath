@@ -67,7 +67,10 @@ function App() {
   const [choices, setChoices] = useState([]); // Choices to display
   const [promptQueue, setPromptQueue] = useState([]);
   const [isText, setIsText] = useState(null)
+  const [isProcessingQueue, setIsProcessingQueue] = useState(false)
   const resolvePromiseRef = useRef(null); // Use a ref to store the resolve function
+  // const isProcessing = useRef(false)
+
 
 
 
@@ -88,6 +91,14 @@ const resolveChoice = (choice) => {
   console.log(`Choice successfully selected: ${choice}`)
 }
 
+  const promptPlayerToChooseChampion = (player) => {
+    setChoices([52, 53, 54, 55, 56])
+    setIsText(false)
+    return new Promise((resolve) => {
+      resolvePromiseRef.current = resolve; 
+
+    });
+  }
   const promptPlayerToChooseTrinket = (player) => {
     setChoices(gameState.trinkets)
     setIsText(false)
@@ -237,15 +248,22 @@ const resolveChoice = (choice) => {
 
 
   useEffect(() => {
-    if (!gameState) return; 
+
+
+    if (!gameState || isProcessingQueue) return; 
 
     const iteratePrompt = async () =>{
-      let size = gameState.promptQueue.length
-      if (size > 0){
-        let prompt = gameState.promptQueue[size-1]
-        fetch(`http://localhost:5000/api/poppromptqueue`, {method: `POST`})
-        let result = await resolvePrompt(prompt)
-        
+
+      
+
+
+      const size = await fetch(`http://localhost:5000/api/promptqueue/length`, {method: `GET`})
+      const queueLength = await size.json()
+      console.log(`Prompt Queue size: ${queueLength.length}`)
+      if (queueLength.length > 0){
+        let promptRes = await fetch(`http://localhost:5000/api/promptqueue/pop`, {method: `POST`})
+        let prompt = await promptRes.json()
+        await resolvePrompt(prompt)
       }
 
     }
@@ -475,6 +493,10 @@ const resolvePrompt = async (prompt) =>{
       let choice = await promptPlayerToChooseCloak(prompt.player)
       handleCloak(prompt.player, choice)
     }
+    else if (prompt.code == 103){
+      let choice = await promptPlayerToChooseChampion(prompt.player)
+      handleChampion(prompt.player, choice)
+    }
   }
   if (prompt.code > 200 && prompt.code < 300){ //insight
     if (prompt.code == 201 || prompt.code == 202){
@@ -489,6 +511,16 @@ const resolvePrompt = async (prompt) =>{
   }
 }
 
+
+const handleChampion = async (player, choice) =>{
+  let champion = 52 + choice
+
+  const response = await fetch(`http://localhost:5000/api/player/${player}/addtodiscard/${champion}`, {
+            method: 'POST'
+
+      });
+  console.log(response)
+}
 
 const handleAmulet = async (player, choice) =>{
   let amulet = 46 + choice
@@ -521,6 +553,27 @@ const handleTrinket = async (player, choice) =>{
   console.log(response)
   
 }
+
+const handleMightTrackTap = async (player) =>{
+  let might =  gameState.players[player-1].might
+  if (gameState.phase != 1){
+    setPopupText("You can only tap the might track during the play phase")
+  }
+  else if (might < 20){
+    setPopupText("You don't have enough might")
+  } 
+  else if (might < 40){
+    const response = await fetch(`http://localhost:5000/api/player/${player}/draw`, {
+            method: 'POST'
+      });
+  }
+  else {
+    //work here
+  }
+}
+
+
+
 
  return (
   <>
